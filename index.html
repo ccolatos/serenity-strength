@@ -1,0 +1,1642 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Serenity Strength</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Strength">
+<meta name="theme-color" content="#F4F4F0" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121B1B" media="(prefers-color-scheme: dark)">
+<meta name="description" content="A bone-first strength program: three home workouts, five levels, animated form guides, and a log that suggests when to move up.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231E6E62'/%3E%3Cpath d='M14 44h36M20 44V26l12-8 12 8v18' fill='none' stroke='%23F4F4F0' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root {
+  --bg: #F4F4F0; --surface: #FFFFFF; --fog: #E8EAE4; --line: #D3D7CF; --ink: #1D2A2F; --ink-2: #4C5B61; --muted: #7C888D;
+  --accent: #1E6E62; --accent-ink: #F4F4F0; --tint: #DDEBE6; --tint-ink: #17544B; --danger: #A33A2F; --warn: #8A6A1A; --warn-bg: #F3ECD8;
+  --hero: #1D2A2F; --hero-ink: #F4F4F0; --hero-muted: #A9B4B8; --hero-line: rgba(244,244,240,.18);
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", "URW Palladio L", Georgia, serif;
+  --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+  --r: 14px; --r-s: 10px; --pad: 20px; --nav-h: 62px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #121B1B; --surface: #1A2626; --fog: #223030; --line: #33423F; --ink: #ECEEE8; --ink-2: #B8C2BD; --muted: #86948F;
+    --accent: #4FB39F; --accent-ink: #0F1A18; --tint: #1E3A34; --tint-ink: #BFE3DA; --danger: #E07A6E; --warn: #E0BE6A; --warn-bg: #2E2A1A;
+    --hero: #24343A; --hero-ink: #ECEEE8; --hero-muted: #9FB0B4; --hero-line: rgba(236,238,232,.16); }
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.45 var(--sans); -webkit-tap-highlight-color: transparent; -webkit-font-smoothing: antialiased; overscroll-behavior-y: none; }
+button, input, select { font: inherit; color: inherit; }
+button { touch-action: manipulation; cursor: pointer; }
+h1, h2, h3 { font-family: var(--serif); font-weight: 400; margin: 0; letter-spacing: -0.005em; }
+h1 { font-size: 34px; line-height: 1.15; }
+h2 { font-size: 26px; line-height: 1.2; }
+h3 { font-size: 21px; line-height: 1.25; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); }
+.small { font-size: 15px; }
+.num { font-variant-numeric: tabular-nums; }
+a { color: var(--accent); }
+
+#app { max-width: 520px; margin: 0 auto; min-height: 100vh; }
+#screen { padding: calc(env(safe-area-inset-top) + 18px) var(--pad) calc(var(--nav-h) + env(safe-area-inset-bottom) + 28px); }
+.screen-title { margin: 6px 0 18px; }
+
+/* Bottom navigation */
+#tabs { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--nav-h) + env(safe-area-inset-bottom)); padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); border-top: 1px solid var(--line); display: flex; z-index: 20; }
+#tabs .tabs-in { width: 100%; max-width: 520px; margin: 0 auto; display: flex; }
+#tabs button { flex: 1; background: none; border: 0; padding: 8px 0 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 11.5px; color: var(--muted); }
+#tabs button svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+#tabs button[aria-current="page"] { color: var(--accent); }
+#tabs button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; border-radius: 8px; }
+
+/* Week strip */
+.week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin: 16px 0 22px; }
+.week .day { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.week .dot { width: 34px; height: 34px; border-radius: 50%; border: 1.5px solid var(--line); display: grid; place-items: center; font-family: var(--serif); font-size: 16px; color: var(--ink-2); background: var(--surface); }
+.week .dot.done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.week .dot.plan { border-style: dashed; color: var(--muted); }
+.week .day.today .dot { border-color: var(--ink); border-width: 2px; }
+.week .day.today { color: var(--ink); font-weight: 600; }
+
+/* Hero card */
+.hero { background: var(--hero); color: var(--hero-ink); border-radius: 22px; padding: 22px 22px 18px; margin: 0 0 22px; position: relative; overflow: hidden; }
+.hero .kicker { color: var(--hero-muted); font-size: 15px; margin-bottom: 2px; }
+.hero h2 { font-size: 30px; }
+.hero .meta { color: var(--hero-muted); margin: 6px 0 0; font-size: 15px; }
+.hero .figbox { height: 176px; margin: 8px -8px 2px; color: var(--hero-ink); }
+.hero .list { list-style: none; margin: 0 0 16px; padding: 0; border-top: 1px solid var(--hero-line); }
+.hero .list li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--hero-line); font-size: 15.5px; }
+.hero .list li .rx { color: var(--hero-muted); white-space: nowrap; }
+.hero .btn.primary { width: 100%; }
+.hero .btn.quiet { color: var(--hero-ink); }
+.hero .note { color: var(--hero-muted); font-size: 14px; margin-top: 10px; }
+
+/* Figures */
+.figbox { width: 100%; height: 190px; display: grid; place-items: center; }
+.fig { width: 100%; height: 100%; max-height: 100%; }
+.fig-line { fill: none; stroke: currentColor; stroke-width: 3.4; stroke-linecap: round; stroke-linejoin: round; }
+.fig-head { fill: currentColor; }
+.fig-floor { stroke: currentColor; opacity: .22; stroke-width: 1.5; }
+.fig-db { fill: currentColor; }
+.fig-bench, .fig-wall { fill: currentColor; opacity: .16; }
+.fig-band { fill: none; stroke: var(--accent); stroke-width: 2.6; stroke-dasharray: 4 3; }
+.hero .fig-band { stroke: #7FD1BF; }
+.thumb { width: 84px; height: 72px; flex: none; color: var(--ink-2); }
+.thumb .fig { width: 100%; height: 100%; }
+.thumb .fig-line { stroke-width: 4.5; }
+.thumb .fig-floor { display: none; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; border: 1.5px solid transparent; padding: 0 18px; height: 52px; font-weight: 600; font-size: 17px; background: var(--fog); color: var(--ink); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); }
+.btn.outline { background: transparent; border-color: var(--line); }
+.btn.quiet { background: transparent; color: var(--accent); height: 44px; padding: 0 8px; }
+.btn.danger { background: transparent; color: var(--danger); border-color: var(--line); }
+.btn.block { width: 100%; }
+.btn.sm { height: 40px; font-size: 15px; padding: 0 14px; border-radius: 10px; }
+.btn:disabled { opacity: .45; }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.row { display: flex; gap: 10px; align-items: center; }
+.row > .btn { flex: 1; }
+.stack { display: flex; flex-direction: column; gap: 10px; }
+
+/* Sections and lists */
+.section { margin: 26px 0 0; }
+.section h3 { margin-bottom: 10px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; }
+.card + .card { margin-top: 10px; }
+.card.tint { background: var(--tint); border-color: transparent; color: var(--tint-ink); }
+.card.warn { background: var(--warn-bg); border-color: transparent; color: var(--warn); }
+.rows { list-style: none; margin: 0; padding: 0; }
+.rows li { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.rows li:last-child { border-bottom: 0; }
+.rows .grow { flex: 1; min-width: 0; }
+.rows .t { font-size: 17px; }
+.rows .s { color: var(--muted); font-size: 14.5px; }
+.rows .v { font-variant-numeric: tabular-nums; color: var(--ink-2); white-space: nowrap; }
+button.rowbtn { all: unset; display: flex; width: 100%; align-items: center; gap: 14px; cursor: pointer; }
+button.rowbtn:focus-visible { outline: 2px solid var(--accent); border-radius: 8px; }
+.chev { color: var(--muted); flex: none; }
+.pill { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--fog); color: var(--ink-2); font-size: 13px; }
+.pill.strong { background: var(--tint); color: var(--tint-ink); }
+.pill.moderate { background: var(--fog); }
+.pill.indirect { background: transparent; border: 1px solid var(--line); }
+.pill.locked { background: transparent; border: 1px solid var(--line); color: var(--muted); }
+ul.plain { margin: 0 0 12px; padding-left: 20px; }
+ul.plain li { margin-bottom: 6px; }
+
+/* Segmented control and chips */
+.seg { display: flex; background: var(--fog); border-radius: 12px; padding: 3px; }
+.seg button { flex: 1; border: 0; background: transparent; border-radius: 9px; height: 40px; font-weight: 500; color: var(--ink-2); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip { border: 1.5px solid var(--line); background: var(--surface); border-radius: 999px; height: 40px; padding: 0 14px; font-weight: 500; color: var(--ink-2); }
+.chip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.chip.sm { height: 34px; padding: 0 12px; font-size: 14.5px; }
+.chip.day { width: 41px; padding: 0; justify-content: center; display: inline-flex; align-items: center; }
+
+/* Forms */
+.field { margin: 0 0 16px; }
+.field label { display: block; font-size: 14.5px; color: var(--muted); margin-bottom: 6px; }
+.field input[type="text"], .field input[type="number"], .field select { width: 100%; height: 48px; border: 1.5px solid var(--line); border-radius: 12px; padding: 0 14px; background: var(--surface); font-size: 17px; }
+.field input:focus, .field select:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.stepper { display: grid; grid-template-columns: 56px 1fr 56px; align-items: center; height: 60px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface); overflow: hidden; }
+.stepper button { height: 100%; border: 0; background: transparent; font-size: 28px; color: var(--accent); font-weight: 300; }
+.stepper button:active { background: var(--fog); }
+.stepper .val { text-align: center; font-family: var(--sans); font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.stepper .val small { font-size: 14px; font-weight: 500; color: var(--muted); margin-left: 4px; }
+.stepper.wide { height: 64px; }
+.stepper .val input { width: 100%; height: 100%; border: 0; text-align: center; font-size: 26px; font-weight: 600; background: transparent; }
+.stepper .val input:focus { outline: none; background: var(--fog); }
+.inline-cap { font-size: 13.5px; color: var(--muted); text-align: center; margin-top: 4px; }
+
+/* Session player */
+#session { position: fixed; inset: 0; background: var(--bg); z-index: 30; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+#session[hidden] { display: none; }
+.s-in { max-width: 520px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 12px) var(--pad) calc(env(safe-area-inset-bottom) + 28px); min-height: 100%; }
+.s-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.s-top .prog { color: var(--muted); font-size: 14.5px; }
+.s-top .x { all: unset; width: 44px; height: 44px; display: grid; place-items: center; border-radius: 50%; color: var(--ink-2); cursor: pointer; margin-right: -8px; }
+.s-top .x:focus-visible { outline: 2px solid var(--accent); }
+.s-stage { color: var(--muted); font-size: 15px; }
+.s-name { margin: 2px 0 6px; }
+.s-target { color: var(--ink-2); font-size: 16px; margin-bottom: 4px; }
+.s-figure { height: 220px; margin: 4px 0 8px; color: var(--ink); }
+.s-figure .fig { max-width: 320px; }
+.s-set { display: flex; align-items: baseline; justify-content: space-between; margin: 10px 0 12px; }
+.s-set .n { font-family: var(--serif); font-size: 24px; }
+.s-set .r { color: var(--muted); font-size: 15px; }
+.inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.inputs.one { grid-template-columns: 1fr; }
+.effort { margin: 4px 0 16px; }
+.effort .chips { display: grid; grid-template-columns: repeat(3, 1fr); }
+.effort .chip { padding: 0 6px; font-size: 15px; }
+.effort .cap { color: var(--muted); font-size: 13.5px; margin-top: 8px; text-align: center; min-height: 18px; }
+.howto { margin: 14px 0 0; border-top: 1px solid var(--line); padding-top: 4px; }
+.howto summary { list-style: none; cursor: pointer; padding: 10px 0; font-weight: 600; display: flex; justify-content: space-between; }
+.howto summary::-webkit-details-marker { display: none; }
+.howto summary::after { content: "+"; color: var(--muted); font-weight: 400; font-size: 22px; line-height: 1; }
+.howto[open] summary::after { content: "\2212"; }
+.howto ol { padding-left: 20px; margin: 4px 0 10px; }
+.howto ol li { margin-bottom: 8px; }
+.howto .faults { color: var(--ink-2); font-size: 15px; }
+.timerbig { font-family: var(--serif); font-size: 64px; line-height: 1; text-align: center; font-variant-numeric: tabular-nums; margin: 10px 0; }
+.suggest { background: var(--tint); color: var(--tint-ink); border-radius: var(--r-s); padding: 10px 14px; font-size: 15px; margin-bottom: 12px; }
+.suggest.down { background: var(--warn-bg); color: var(--warn); }
+
+/* Rest overlay */
+#rest { position: fixed; inset: 0; z-index: 40; background: var(--hero); color: var(--hero-ink); display: grid; place-items: center; text-align: center; padding: 24px; }
+#rest[hidden] { display: none; }
+#rest .ring { width: 220px; height: 220px; margin: 0 auto 14px; position: relative; }
+#rest svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+#rest circle { fill: none; stroke-width: 6; }
+#rest .track { stroke: var(--hero-line); }
+#rest .arc { stroke: #7FD1BF; stroke-linecap: round; transition: stroke-dashoffset .25s linear; }
+#rest .t { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--serif); font-size: 62px; font-variant-numeric: tabular-nums; }
+#rest .next { color: var(--hero-muted); margin-bottom: 22px; font-size: 16px; }
+#rest .row { justify-content: center; }
+#rest .btn { background: rgba(244,244,240,.12); color: var(--hero-ink); border-color: transparent; }
+#rest .btn.primary { background: #7FD1BF; color: #0F1A18; }
+
+/* Sheet */
+#sheet { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.42); display: flex; align-items: flex-end; justify-content: center; }
+#sheet[hidden] { display: none; }
+.sheet-card { width: 100%; max-width: 520px; max-height: 88vh; overflow-y: auto; -webkit-overflow-scrolling: touch; background: var(--bg); border-radius: 22px 22px 0 0; padding: 14px var(--pad) calc(env(safe-area-inset-bottom) + 24px); }
+.sheet-card .grab { width: 40px; height: 4px; border-radius: 2px; background: var(--line); margin: 0 auto 12px; }
+.sheet-card h2 { margin-bottom: 4px; }
+.sheet-card .figbox { height: 200px; margin: 6px 0; }
+.sheet-card .close { margin-top: 18px; }
+.sheet-card .refs { font-size: 13.5px; color: var(--muted); }
+.sheet-card .refs li { margin-bottom: 8px; }
+
+/* Progress */
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 8px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 12px 10px; }
+.stat .v { font-family: var(--serif); font-size: 30px; line-height: 1.1; }
+.stat .l { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.chart { width: 100%; height: 72px; display: block; }
+.chart .ln { fill: none; stroke: var(--accent); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.chart .pt { fill: var(--accent); }
+.chart .ax { stroke: var(--line); stroke-width: 1; }
+.bars { display: flex; align-items: flex-end; gap: 6px; height: 64px; margin: 6px 0 4px; }
+.bars div { flex: 1; background: var(--tint); border-radius: 4px 4px 0 0; min-height: 3px; position: relative; }
+.bars div.on { background: var(--accent); }
+.bars-l { display: flex; gap: 6px; font-size: 11px; color: var(--muted); }
+.bars-l span { flex: 1; text-align: center; }
+
+/* Level cards */
+.levels { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin: 10px 0 12px; }
+.levels button { border: 1.5px solid var(--line); background: var(--surface); border-radius: 12px; padding: 10px 0 8px; display: flex; flex-direction: column; align-items: center; color: var(--ink-2); }
+.levels button b { font-family: var(--serif); font-weight: 400; font-size: 22px; color: var(--ink); }
+.levels button span { font-size: 12px; color: var(--muted); }
+.levels button[aria-pressed="true"] { border-color: var(--accent); background: var(--tint); }
+.levels button[aria-pressed="true"] b { color: var(--tint-ink); }
+
+/* Toast */
+#toast { position: fixed; left: 50%; bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 14px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font-size: 15px; opacity: 0; pointer-events: none; transition: opacity .25s; z-index: 60; white-space: nowrap; }
+#toast.show { opacity: 1; }
+
+.center { text-align: center; }
+.hr { border: 0; border-top: 1px solid var(--line); margin: 18px 0; }
+.kv { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.kv:last-child { border-bottom: 0; }
+.kv .k { color: var(--ink-2); }
+.kv .v { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { #rest .arc { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <main id="screen" aria-live="polite"></main>
+  <nav id="tabs" aria-label="Sections"><div class="tabs-in"></div></nav>
+  <section id="session" hidden aria-label="Workout"></section>
+  <div id="rest" hidden></div>
+  <div id="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true"></div></div>
+  <div id="toast" role="status"></div>
+</div>
+<script>
+/* Bedrock figure engine: forward-kinematic line figures in SVG.
+   Side rig: root = support ankle. Angles in degrees from vertical.
+   Going up the support leg and torso, positive = the upper end displaced forward (+x).
+   Free leg (from hip downward) and arms (from shoulder downward): positive = forward.
+   Front rig: root = pelvis, angles positive = away from the midline. */
+const FIG = (() => {
+  const L = { shin: 40, thigh: 42, torso: 48, neck: 6, head: 9, ua: 26, fa: 24, foot: 16, heel: 6, hipW: 14, shW: 22 };
+  const FLOOR = 176, D = Math.PI / 180;
+  const up = (p, a, n) => [p[0] + n * Math.sin(a * D), p[1] - n * Math.cos(a * D)];
+  const fd = (p, a, n) => [p[0] + n * Math.sin(a * D), p[1] + n * Math.cos(a * D)];
+  const rot = (v, a) => [v[0] * Math.cos(a * D) - v[1] * Math.sin(a * D), v[0] * Math.sin(a * D) + v[1] * Math.cos(a * D)];
+  const add = (p, v) => [p[0] + v[0], p[1] + v[1]];
+
+  const SIDE = { view: 'side', ax: 118, ay: FLOOR - 5, s: 0, t: 0, b: 0, hd: 0, ft: 0, s2: null, t2: null, ft2: 0,
+    ua: 0, fa: 0, ua2: null, fa2: null, uas: 1, fas: 1, ua2s: 1, fa2s: 1, t2s: 1, s2s: 1, far: 0, props: [] };
+  const FRONT = { view: 'front', px: 120, tl: 4, tr: 4, sl: 0, sr: 0, kl: 0, kr: 0, lift: 0, lt: 0,
+    ual: 6, uar: 6, fal: 6, far: 6, uals: 1, uars: 1, fals: 1, fars: 1, hd: 0, props: [] };
+
+  function solveSide(P) {
+    const A = [P.ax, P.ay];
+    const K = up(A, P.s, L.shin), H = up(K, P.t, L.thigh), S = up(H, P.b, L.torso);
+    const N = up(S, P.b + P.hd, L.neck), HC = up(N, P.b + P.hd, L.head);
+    const t2 = P.t2 == null ? P.t : P.t2, s2 = P.s2 == null ? P.s : P.s2;
+    const K2 = fd(H, -t2, L.thigh * P.t2s), A2 = fd(K2, -s2, L.shin * P.s2s);
+    const fwd2 = rot([Math.cos(s2 * D), Math.sin(s2 * D)], P.ft2);
+    const toe2 = add(A2, [fwd2[0] * L.foot, fwd2[1] * L.foot]), heel2 = add(A2, [-fwd2[0] * L.heel, -fwd2[1] * L.heel]);
+    const toe = add(A, rot([L.foot, 5], P.ft)), heel = add(A, rot([-L.heel, 5], P.ft));
+    const E = fd(S, P.ua, L.ua * P.uas), W = fd(E, P.fa, L.fa * P.fas);
+    const ua2 = P.ua2 == null ? P.ua : P.ua2, fa2 = P.fa2 == null ? P.fa : P.fa2;
+    const E2 = fd(S, ua2, L.ua * P.ua2s), W2 = fd(E2, fa2, L.fa * P.fa2s);
+    return { A, K, H, S, N, HC, K2, A2, toe, heel, toe2, heel2, E, W, E2, W2 };
+  }
+  function solveFront(P) {
+    const hipY = 0;
+    const HL = [P.px - L.hipW / 2, hipY], HR = [P.px + L.hipW / 2, hipY];
+    const KL = fd(HL, -P.tl, L.thigh * Math.cos(P.kl * D)), KR = fd(HR, P.tr, L.thigh * Math.cos(P.kr * D));
+    const AL = fd(KL, -P.sl, L.shin * Math.cos(P.kl * D * 0.6)), AR = fd(KR, P.sr, L.shin * Math.cos(P.kr * D * 0.6));
+    const low = Math.max(AL[1], AR[1]);
+    const dy = FLOOR - 4 - low;
+    const sh = (p) => [p[0], p[1] + dy];
+    const hl = sh(HL), hr = sh(HR), kl = sh(KL), kr = sh(KR), al = sh(AL), ar = sh(AR);
+    const pel = [P.px, hipY + dy];
+    const S = up(pel, P.lt, L.torso), N = up(S, P.lt + P.hd, L.neck), HC = up(N, P.lt + P.hd, L.head);
+    const SL = [S[0] - L.shW / 2, S[1]], SR = [S[0] + L.shW / 2, S[1]];
+    const EL = fd(SL, -P.ual, L.ua * P.uals), WL = fd(EL, -P.fal, L.fa * P.fals);
+    const ER = fd(SR, P.uar, L.ua * P.uars), WR = fd(ER, P.far, L.fa * P.fars);
+    return { hl, hr, kl, kr, al, ar, pel, S, N, HC, SL, SR, EL, WL, ER, WR };
+  }
+
+  const NS = 'http://www.w3.org/2000/svg';
+  function el(tag, attrs) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+  const pts = (arr) => arr.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+
+  function create(container, opts = {}) {
+    const svg = el('svg', { viewBox: '0 -18 240 218', class: 'fig', 'aria-hidden': 'true' });
+    const propsG = el('g', { class: 'fig-props' });
+    const farG = el('g', { class: 'fig-far' });
+    const nearG = el('g', { class: 'fig-near' });
+    svg.appendChild(el('line', { class: 'fig-floor', x1: 0, y1: FLOOR, x2: 240, y2: FLOOR }));
+    svg.appendChild(propsG); svg.appendChild(farG); svg.appendChild(nearG);
+    container.appendChild(svg);
+    const cache = {};
+    const line = (g, key) => cache[key] || (cache[key] = g.appendChild(el('polyline', { class: 'fig-line' })));
+    const circ = (g, key) => cache[key] || (cache[key] = g.appendChild(el('circle', { class: 'fig-head', r: L.head }))
+    );
+    function drawSide(P) {
+      const J = solveSide(P);
+      farG.setAttribute('transform', 'translate(3 0)');
+      farG.setAttribute('opacity', '0.42');
+      line(farG, 'leg2').setAttribute('points', pts([J.H, J.K2, J.A2, J.toe2]));
+      line(farG, 'heel2').setAttribute('points', pts([J.heel2, J.A2]));
+      line(farG, 'arm2').setAttribute('points', pts([J.S, J.E2, J.W2]));
+      line(nearG, 'leg').setAttribute('points', pts([J.H, J.K, J.A, J.toe]));
+      line(nearG, 'heel').setAttribute('points', pts([J.heel, J.A]));
+      line(nearG, 'torso').setAttribute('points', pts([J.H, J.S, J.N]));
+      line(nearG, 'arm').setAttribute('points', pts([J.S, J.E, J.W]));
+      const hc = circ(nearG, 'head'); hc.setAttribute('cx', J.HC[0]); hc.setAttribute('cy', J.HC[1]);
+      drawProps(P, J);
+    }
+    function drawFront(P) {
+      const J = solveFront(P);
+      farG.removeAttribute('transform'); farG.setAttribute('opacity', '1');
+      line(farG, 'leg2').setAttribute('points', pts([J.pel, J.hl, J.kl, J.al, [J.al[0] - 7, J.al[1]]]));
+      line(farG, 'heel2').setAttribute('points', pts([J.al, [J.al[0] + 7, J.al[1]]]));
+      line(farG, 'arm2').setAttribute('points', pts([J.SL, J.EL, J.WL]));
+      line(nearG, 'leg').setAttribute('points', pts([J.pel, J.hr, J.kr, J.ar, [J.ar[0] + 7, J.ar[1]]]));
+      line(nearG, 'heel').setAttribute('points', pts([J.ar, [J.ar[0] - 7, J.ar[1]]]));
+      line(nearG, 'torso').setAttribute('points', pts([J.pel, J.S, J.N]));
+      line(nearG, 'sh').setAttribute('points', pts([J.SL, J.SR]));
+      line(nearG, 'arm').setAttribute('points', pts([J.SR, J.ER, J.WR]));
+      const hc = circ(nearG, 'head'); hc.setAttribute('cx', J.HC[0]); hc.setAttribute('cy', J.HC[1]);
+      drawProps(P, J);
+    }
+    let propEls = [];
+    function drawProps(P, J) {
+      const want = P.props || [];
+      while (propEls.length > want.length) propsG.removeChild(propEls.pop());
+      want.forEach((pr, i) => {
+        let e = propEls[i];
+        const tag = pr.type === 'band' ? 'polyline' : pr.type === 'db' ? 'rect' : 'rect';
+        if (!e || e.tagName !== tag) { if (e) propsG.removeChild(e); e = el(tag, {}); propsG.appendChild(e); propEls[i] = e; }
+        const at = (ref) => Array.isArray(ref) ? ref : J[ref];
+        if (pr.type === 'db') {
+          const p = at(pr.at); const w = pr.w || 14, h = pr.h || 7;
+          e.setAttribute('class', 'fig-db'); e.setAttribute('x', p[0] - w / 2 + (pr.dx || 0)); e.setAttribute('y', p[1] - h / 2 + (pr.dy || 0));
+          e.setAttribute('width', w); e.setAttribute('height', h); e.setAttribute('rx', 2.5);
+          e.setAttribute('transform', pr.rot ? `rotate(${pr.rot} ${p[0]} ${p[1]})` : '');
+        } else if (pr.type === 'band') {
+          e.setAttribute('class', 'fig-band');
+          e.setAttribute('points', pts(pr.pts.map(at)));
+        } else {
+          e.setAttribute('class', pr.type === 'wall' ? 'fig-wall' : 'fig-bench');
+          e.setAttribute('x', pr.x); e.setAttribute('y', pr.y); e.setAttribute('width', pr.w); e.setAttribute('height', pr.h);
+          e.setAttribute('rx', pr.type === 'wall' ? 0 : 2);
+        }
+      });
+    }
+    let raf = null, running = false, keys = null, base = null, t0 = 0, total = 0, still = null;
+    const ease = (u) => 0.5 - 0.5 * Math.cos(Math.PI * u);
+    function lerpPose(a, b, u) {
+      const o = Object.assign({}, a);
+      for (const k in a) { if (typeof a[k] === 'number' && typeof b[k] === 'number') o[k] = a[k] + (b[k] - a[k]) * u; }
+      o.props = u < 0.5 ? a.props : b.props;
+      // bench/step props interpolate nothing; band points reference joints so they follow
+      return o;
+    }
+    function poseAt(time) {
+      let acc = 0;
+      for (let i = 0; i < keys.length; i++) {
+        const k = keys[i], d = k.d == null ? 1 : k.d;
+        if (time < acc + d) return lerpPose(k, keys[(i + 1) % keys.length], ease((time - acc) / d));
+        acc += d;
+      }
+      return keys[0];
+    }
+    function draw(P) { (P.view === 'front' ? drawFront : drawSide)(P); }
+    function frame(now) {
+      if (!running) return;
+      const t = ((now - t0) / 1000) % total;
+      draw(poseAt(t));
+      raf = requestAnimationFrame(frame);
+    }
+    const api = {
+      set(ex) {
+        base = ex.view === 'front' ? FRONT : SIDE;
+        keys = ex.keys.map(k => Object.assign({}, base, ex.base || {}, k));
+        total = keys.reduce((s, k) => s + (k.d == null ? 1 : k.d), 0);
+        still = keys[0];
+        if (!running) draw(still);
+        return api;
+      },
+      play() { if (running || !keys) return api; if (opts.reduced) { draw(still); return api; } running = true; t0 = performance.now(); raf = requestAnimationFrame(frame); return api; },
+      stop() { running = false; if (raf) cancelAnimationFrame(raf); raf = null; if (keys) draw(still); return api; },
+      showKey(i) { api.stop(); draw(keys[i % keys.length]); return api; },
+      showTime(t) { api.stop(); draw(poseAt(t)); return api; },
+      destroy() { api.stop(); if (svg.parentNode) svg.parentNode.removeChild(svg); },
+      get total() { return total; }
+    };
+    return api;
+  }
+  return { create, FLOOR, L };
+})();
+
+/* Exercise library. Keyframes follow the FIG conventions (see figure.js).
+   evidence: 'strong' | 'moderate' | 'indirect' describes the bone-density evidence specifically. */
+const REFS = {
+  liftmor: 'Watson SL, Weeks BK, Weis LJ, Harding AT, Horan SA, Beck BR. High-intensity resistance and impact training improves bone mineral density and physical function in postmenopausal women with osteopenia and osteoporosis: the LIFTMOR randomized controlled trial. J Bone Miner Res. 2018;33(2):211-220. doi:10.1002/jbmr.3284',
+  essa: 'Beck BR, Daly RM, Fiatarone Singh MA, Taaffe DR. Exercise and Sports Science Australia (ESSA) position statement on exercise prescription for the prevention and management of osteoporosis. J Sci Med Sport. 2017;20(5):438-445. doi:10.1016/j.jsams.2016.10.001',
+  nsca: 'Fragala MS, Cadore EL, Dorgo S, Izquierdo M, Kraemer WJ, Peterson MD, Ryan ED. Resistance training for older adults: position statement from the National Strength and Conditioning Association. J Strength Cond Res. 2019;33(8):2019-2052. doi:10.1519/JSC.0000000000003230',
+  acsm: 'American College of Sports Medicine. Position stand: progression models in resistance training for healthy adults. Med Sci Sports Exerc. 2009;41(3):687-708.',
+  sherrington: 'Sherrington C, Fairhall NJ, Wallbank GK, et al. Exercise for preventing falls in older people living in the community. Cochrane Database Syst Rev. 2019;1:CD012424.',
+  bailey: 'Bailey CA, Brooke-Wavell K. Optimum frequency of exercise for bone health: randomised controlled trial of a high-impact unilateral intervention. Bone. 2010;46(4):1043-1049.',
+  snow: 'Snow CM, Shaw JM, Winters KM, Witzke KA. Long-term exercise using weighted vests prevents hip bone loss in postmenopausal women. J Gerontol A Biol Sci Med Sci. 2000;55(9):M489-M491.',
+  reid: 'Reid KF, Fielding RA. Skeletal muscle power: a critical determinant of physical functioning in older adults. Exerc Sport Sci Rev. 2012;40(1):4-12.',
+  protage: 'Bauer J, Biolo G, Cederholm T, et al. Evidence-based recommendations for optimal dietary protein intake in older people: a position paper from the PROT-AGE Study Group. J Am Med Dir Assoc. 2013;14(8):542-559.',
+  morton: 'Morton RW, Murphy KT, McKellar SR, et al. A systematic review, meta-analysis and meta-regression of the effect of protein supplementation on resistance training-induced gains in muscle mass and strength in healthy adults. Br J Sports Med. 2018;52(6):376-384.',
+  paddon: 'Paddon-Jones D, Rasmussen BB. Dietary protein recommendations and the prevention of sarcopenia. Curr Opin Clin Nutr Metab Care. 2009;12(1):86-90.',
+  nih: 'National Institutes of Health, Office of Dietary Supplements. Calcium and Vitamin D fact sheets for health professionals.',
+  swan: 'Greendale GA, Sowers M, Han W, et al. Bone mineral density loss in relation to the final menstrual period in a multiethnic cohort: results from the Study of Women\u2019s Health Across the Nation (SWAN). J Bone Miner Res. 2012;27(1):111-118.',
+  delaet: 'De Laet C, Kanis JA, Od\u00e9n A, et al. Body mass index as a predictor of fracture risk: a meta-analysis. Osteoporos Int. 2005;16(11):1330-1338.'
+};
+
+const EV = { strong: 'Strong evidence', moderate: 'Moderate evidence', indirect: 'Indirect evidence' };
+
+/* Shared prop geometry */
+const BENCH_BEHIND = { type: 'bench', x: 60, y: 136, w: 44, h: 40 };
+const BENCH_FRONT = { type: 'bench', x: 160, y: 136, w: 46, h: 40 };
+const STEP_FRONT = { type: 'step', x: 150, y: 146, w: 66, h: 30 };
+const DB = (at, extra) => Object.assign({ type: 'db', at, w: 14, h: 7 }, extra || {});
+
+const EXERCISES = {
+  box_squat: {
+    name: 'Squat to a bench', pattern: 'Squat', load: 'bw', unit: 'reps', start: null,
+    equipment: 'Flat bench', evidence: 'strong',
+    cues: ['Stand a foot in front of the bench, feet about shoulder width, toes turned out a little.', 'Push your hips back and sit down slowly until you touch the bench, then stand back up without rocking.', 'Keep your chest up and your whole foot on the floor; knees track over your toes.', 'Breathe in on the way down, out as you stand.'],
+    faults: ['Dropping onto the bench instead of controlling the descent.', 'Knees caving inward.', 'Heels lifting off the floor.'],
+    why: 'The squat pattern loads the hip and spine, the two sites that matter most for fracture. Learning it to a bench builds the movement safely before weight is added; the back squat was one of the three lifts that raised spine density in the LIFTMOR trial.',
+    refs: ['liftmor', 'essa'],
+    keys: [
+      { d: 1.3, props: [BENCH_BEHIND] },
+      { s: 24, t: -95, b: 40, ua: 78, fa: 80, d: 0.4, props: [BENCH_BEHIND] },
+      { s: 24, t: -95, b: 40, ua: 78, fa: 80, d: 1.1, props: [BENCH_BEHIND] },
+      { d: 0.6, props: [BENCH_BEHIND] }
+    ]
+  },
+  goblet_squat: {
+    name: 'Goblet squat', pattern: 'Squat', load: 'db1', unit: 'reps', start: 15, inc: 5,
+    equipment: 'One dumbbell', evidence: 'strong',
+    cues: ['Hold one dumbbell upright against your chest with both hands under the top end.', 'Feet shoulder width, toes slightly out. Sit your hips down between your heels, elbows brushing the inside of your knees.', 'Go as deep as you can with a flat back and heels down, then drive the floor away to stand.', 'Keep the dumbbell touching your chest the whole time.'],
+    faults: ['Leaning forward so the dumbbell drifts away from the chest.', 'Knees caving inward.', 'Rounding the lower back at the bottom.'],
+    why: 'A loaded squat sends compressive force through the femoral neck and lumbar spine. Bone adapts to loads that are heavier than what it meets in daily life, so the weight here will keep rising; this is the home version of the squat used in LIFTMOR.',
+    refs: ['liftmor', 'essa', 'nsca'],
+    keys: [
+      { ua: 5, fa: 150, fas: 0.8, d: 1.3, props: [DB('W', { w: 9, h: 14 })] },
+      { s: 28, t: -85, b: 34, ua: 5, fa: 150, fas: 0.8, d: 0.4, props: [DB('W', { w: 9, h: 14 })] },
+      { s: 28, t: -85, b: 34, ua: 5, fa: 150, fas: 0.8, d: 1.1, props: [DB('W', { w: 9, h: 14 })] },
+      { ua: 5, fa: 150, fas: 0.8, d: 0.6, props: [DB('W', { w: 9, h: 14 })] }
+    ]
+  },
+  front_squat: {
+    name: 'Dumbbell front squat', pattern: 'Squat', load: 'db2', unit: 'reps', start: 15, inc: 5, main: true,
+    equipment: 'Two dumbbells', evidence: 'strong',
+    cues: ['Rest one end of each dumbbell on the front of each shoulder, elbows pointing forward and up.', 'Feet shoulder width. Sit straight down, keeping the elbows high so the dumbbells stay put.', 'Drive up through the whole foot. Stand fully tall at the top.', 'Stop the set when your elbows start to drop; that is your form limit.'],
+    faults: ['Elbows dropping, which tips the torso forward.', 'Cutting the depth short as the weight rises.', 'Knees caving inward.'],
+    why: 'Holding the load at the shoulders puts the weight on top of the spine, close to the axial loading of a barbell squat. This is the main squat at the higher levels, where heavier loads for fewer reps match what raised bone density in trials.',
+    refs: ['liftmor', 'essa', 'nsca'],
+    keys: [
+      { ua: -5, fa: 178, fas: 0.7, d: 1.3, props: [DB('W'), DB('W2')] },
+      { s: 28, t: -82, b: 28, ua: -5, fa: 178, fas: 0.7, d: 0.4, props: [DB('W'), DB('W2')] },
+      { s: 28, t: -82, b: 28, ua: -5, fa: 178, fas: 0.7, d: 1.1, props: [DB('W'), DB('W2')] },
+      { ua: -5, fa: 178, fas: 0.7, d: 0.6, props: [DB('W'), DB('W2')] }
+    ]
+  },
+  split_squat: {
+    name: 'Rear-foot-elevated split squat', pattern: 'Squat, single leg', load: 'db2', unit: 'reps', sides: true, start: 10, inc: 5,
+    equipment: 'Two dumbbells, flat bench', evidence: 'moderate',
+    cues: ['Stand two to three feet in front of the bench and rest the top of your back foot on it.', 'Lower straight down until the back knee is a few inches from the floor. Front shin stays roughly vertical.', 'Push through the front heel to stand. Keep the torso tall or with a slight forward lean.', 'Do all reps on one side, then switch.'],
+    faults: ['Front foot too close to the bench, forcing the knee far past the toes.', 'Bouncing off the bottom.', 'Torso twisting toward the working leg.'],
+    why: 'One leg carries nearly all the load, so the hip is loaded harder with the same dumbbells than in a two-leg squat, which matters when home equipment tops out. Single-leg work also trains balance, the second lever on fracture risk.',
+    refs: ['essa', 'nsca', 'sherrington'],
+    keys: [
+      { t2: 10, s2: 85, s2s: 0.8, ft2: 95, ua: 8, fa: 8, d: 1.2, props: [BENCH_BEHIND, DB('W'), DB('W2')] },
+      { s: 30, t: -60, b: 14, t2: 15, s2: 152, s2s: 0.65, ft2: 30, ua: 8, fa: 8, d: 0.35, props: [BENCH_BEHIND, DB('W'), DB('W2')] },
+      { s: 30, t: -60, b: 14, t2: 15, s2: 152, s2s: 0.65, ft2: 30, ua: 8, fa: 8, d: 1.0, props: [BENCH_BEHIND, DB('W'), DB('W2')] },
+      { t2: 10, s2: 85, s2s: 0.8, ft2: 95, ua: 8, fa: 8, d: 0.5, props: [BENCH_BEHIND, DB('W'), DB('W2')] }
+    ]
+  },
+  rdl: {
+    name: 'Dumbbell Romanian deadlift', pattern: 'Hinge', load: 'db2', unit: 'reps', start: 10, inc: 5, main: true,
+    equipment: 'Two dumbbells', evidence: 'strong',
+    cues: ['Stand tall with a dumbbell in each hand resting on your thighs, knees soft.', 'Push your hips straight back as the dumbbells slide down your legs. Your back stays flat; your shins stay vertical.', 'Stop when you feel a stretch in the hamstrings, usually just below the knee, then drive your hips forward to stand.', 'Think "close the door with your hips," not "bend over."'],
+    faults: ['Rounding the back to get lower.', 'Bending the knees into a squat.', 'Letting the dumbbells drift away from the legs.'],
+    why: 'The hinge is how you load the posterior chain and spine with a flat back. It is the movement pattern of the deadlift, which produced the largest spine gains in LIFTMOR, and it is what protects the back when you pick things up in daily life.',
+    refs: ['liftmor', 'essa'],
+    keys: [
+      { d: 1.4, props: [DB('W'), DB('W2')] },
+      { s: 10, t: -24, b: 72, d: 0.4, props: [DB('W'), DB('W2')] },
+      { s: 10, t: -24, b: 72, d: 1.1, props: [DB('W'), DB('W2')] },
+      { d: 0.5, props: [DB('W'), DB('W2')] }
+    ]
+  },
+  hinge_bw: {
+    name: 'Hip hinge (no weight)', pattern: 'Hinge', load: 'bw', unit: 'reps', start: null, warm: true,
+    equipment: 'None', evidence: 'strong',
+    cues: ['Hands on your hips or sliding down your thighs.', 'Push the hips back, flat back, soft knees, then squeeze the glutes to stand.', 'Slow and smooth; this is the pattern you will load later.'],
+    faults: ['Rounding the back.', 'Turning it into a squat.'],
+    why: 'Grooves the hinge pattern before load is added.', refs: ['liftmor'],
+    keys: [ { d: 1.2 }, { s: 10, t: -24, b: 70, d: 0.3 }, { s: 10, t: -24, b: 70, d: 1.0 }, { d: 0.5 } ]
+  },
+  deadlift: {
+    name: 'Dumbbell deadlift', pattern: 'Hinge', load: 'db2', unit: 'reps', start: 20, inc: 5, main: true,
+    equipment: 'Two dumbbells', evidence: 'strong',
+    cues: ['Dumbbells beside your feet. Push the hips back and bend the knees until you can grip them with a flat back.', 'Brace, then stand up by pushing the floor away; hips and shoulders rise together.', 'Finish tall, then lower under control along the same path.', 'Heavy and slow beats light and fast here.'],
+    faults: ['Hips shooting up first so the back does the lifting.', 'Rounding the lower back.', 'Jerking the weight off the floor.'],
+    why: 'The deadlift loads the spine, hips, and grip together with the heaviest weights you will use at home. In LIFTMOR it was performed at 80 to 85 percent of maximum for 5 sets of 5, and that intensity is what moved bone. The levels build toward that scheme.',
+    refs: ['liftmor', 'essa'],
+    keys: [
+      { s: 30, t: -62, b: 72, d: 1.2, props: [DB('W'), DB('W2')] },
+      { d: 0.4, props: [DB('W'), DB('W2')] },
+      { d: 1.2, props: [DB('W'), DB('W2')] },
+      { s: 30, t: -62, b: 72, d: 0.6, props: [DB('W'), DB('W2')] }
+    ]
+  },
+  sl_rdl: {
+    name: 'Single-leg Romanian deadlift', pattern: 'Hinge, single leg', load: 'db1', unit: 'reps', sides: true, start: 10, inc: 5,
+    equipment: 'One dumbbell', evidence: 'moderate',
+    cues: ['Hold the dumbbell in the hand opposite the standing leg. Stand on one foot with a soft knee.', 'Hinge at the hip so the free leg floats back as your chest comes forward; hips stay square to the floor.', 'Lower until you feel the hamstring stretch, then squeeze the glute to stand.', 'Touch the free foot down between reps if you need to; it still counts.'],
+    faults: ['Hip of the free leg opening toward the ceiling.', 'Rounding the back.', 'Rushing; this one rewards slow control.'],
+    why: 'Combines the hinge with single-leg balance. Balance and functional training is the best-supported way to reduce falls, and a fall is what turns low bone density into a fracture.',
+    refs: ['sherrington', 'essa'],
+    keys: [
+      { t2: 0, s2: 0, ua: 0, fa: 0, ua2: -20, fa2: -20, d: 1.4, props: [DB('W')] },
+      { s: 8, t: -16, b: 76, t2: 82, s2: 82, ua: 0, fa: 0, ua2: -70, fa2: -70, d: 0.4, props: [DB('W')] },
+      { s: 8, t: -16, b: 76, t2: 82, s2: 82, ua: 0, fa: 0, ua2: -70, fa2: -70, d: 1.1, props: [DB('W')] },
+      { t2: 0, s2: 0, ua: 0, fa: 0, ua2: -20, fa2: -20, d: 0.6, props: [DB('W')] }
+    ]
+  },
+  incline_pushup: {
+    name: 'Incline push-up', pattern: 'Push', load: 'bw', unit: 'reps', start: null,
+    equipment: 'Flat bench', evidence: 'indirect',
+    cues: ['Hands on the bench slightly wider than your shoulders, body in one straight line from head to heels.', 'Lower your chest toward the bench with elbows at about 45 degrees from your sides.', 'Press back up until your arms are straight. Keep your hips from sagging or piking.', 'To make it harder over time, move your feet further back; to make it easier, use something higher than the bench.'],
+    faults: ['Hips sagging.', 'Head dropping toward the bench.', 'Elbows flaring straight out to the sides.'],
+    why: 'Pressing builds upper-body strength and the ability to catch yourself. Bone benefit at the hip and spine is indirect; the value here is strength and function.',
+    refs: ['nsca'],
+    base: { ax: 100, ft: 18 },
+    keys: [
+      { s: 45, t: 45, b: 45, ua: -8, fa: -8, d: 1.1, props: [{ type: 'bench', x: 160, y: 136, w: 50, h: 40 }] },
+      { s: 58, t: 58, b: 58, ua: -75, fa: 0, d: 0.3, props: [{ type: 'bench', x: 160, y: 136, w: 50, h: 40 }] },
+      { s: 58, t: 58, b: 58, ua: -75, fa: 0, d: 0.9, props: [{ type: 'bench', x: 160, y: 136, w: 50, h: 40 }] },
+      { s: 45, t: 45, b: 45, ua: -8, fa: -8, d: 0.4, props: [{ type: 'bench', x: 160, y: 136, w: 50, h: 40 }] }
+    ]
+  },
+  bench_press: {
+    name: 'Dumbbell bench press', pattern: 'Push', load: 'db2', unit: 'reps', start: 10, inc: 2.5,
+    equipment: 'Two dumbbells, flat bench', evidence: 'indirect',
+    cues: ['Lie on the bench with feet flat on the floor, dumbbells over your chest, palms facing forward.', 'Lower until the dumbbells are level with your chest, elbows about 45 degrees from your sides.', 'Press up and slightly in until the arms are straight; do not clank the dumbbells together.', 'Keep your shoulder blades pulled down and back into the bench.'],
+    faults: ['Elbows flaring straight out.', 'Lower back arching hard off the bench.', 'Lowering faster than you press.'],
+    why: 'The press is the main upper-body pushing strength builder once the incline push-up is easy. Strength here supports independence and catching a fall; bone effect at the hip and spine is indirect.',
+    refs: ['nsca', 'acsm'],
+    base: { ax: 150, s: 10, t: -86, b: -93, hd: 10 },
+    keys: [
+      { ua: 180, fa: 180, d: 1.2, props: [{ type: 'bench', x: 34, y: 136, w: 106, h: 40 }, DB('W', { w: 10, h: 12 }), DB('W2', { w: 10, h: 12 })] },
+      { ua: 0, uas: 0.5, fa: 180, fas: 0.9, d: 0.3, props: [{ type: 'bench', x: 34, y: 136, w: 106, h: 40 }, DB('W', { w: 10, h: 12 }), DB('W2', { w: 10, h: 12 })] },
+      { ua: 0, uas: 0.5, fa: 180, fas: 0.9, d: 1.0, props: [{ type: 'bench', x: 34, y: 136, w: 106, h: 40 }, DB('W', { w: 10, h: 12 }), DB('W2', { w: 10, h: 12 })] },
+      { ua: 180, fa: 180, d: 0.5, props: [{ type: 'bench', x: 34, y: 136, w: 106, h: 40 }, DB('W', { w: 10, h: 12 }), DB('W2', { w: 10, h: 12 })] }
+    ]
+  },
+  ohp: {
+    name: 'Overhead press', pattern: 'Push, overhead', load: 'db2', unit: 'reps', start: 8, inc: 2.5, main: true,
+    equipment: 'Two dumbbells', evidence: 'strong',
+    cues: ['Stand tall, feet hip width, dumbbells at your shoulders with palms facing forward or slightly in.', 'Brace your trunk, then press straight up until the arms are locked out beside your ears.', 'Lower slowly back to the shoulders. Ribs stay down; do not lean back to finish.', 'If you must lean back to press it, the weight is too heavy for today.'],
+    faults: ['Arching the lower back and flaring the ribs.', 'Pressing forward instead of straight up.', 'Shrugging the shoulders to the ears.'],
+    why: 'Pressing overhead while standing sends the load straight down the spine. The overhead press was the third lift in LIFTMOR, alongside the squat and deadlift, and it is the safest way to load the upper spine at home.',
+    refs: ['liftmor', 'essa'],
+    keys: [
+      { ua: 5, fa: 175, fas: 0.75, d: 1.1, props: [DB('W'), DB('W2')] },
+      { ua: 175, fa: 178, b: -3, d: 0.3, props: [DB('W'), DB('W2')] },
+      { ua: 175, fa: 178, b: -3, d: 1.0, props: [DB('W'), DB('W2')] },
+      { ua: 5, fa: 175, fas: 0.75, d: 0.5, props: [DB('W'), DB('W2')] }
+    ]
+  },
+  push_press: {
+    name: 'Push press', pattern: 'Power, overhead', load: 'db2', unit: 'reps', start: 10, inc: 2.5, main: true,
+    equipment: 'Two dumbbells', evidence: 'moderate',
+    cues: ['Dumbbells at the shoulders, feet hip width.', 'Dip a few inches by bending the knees, torso upright, then drive hard through the floor and use that momentum to press the dumbbells overhead fast.', 'Lock out overhead, then lower the dumbbells slowly to the shoulders and reset before the next rep.', 'The dip is small and quick; the drive is what matters.'],
+    faults: ['Dipping forward instead of straight down.', 'Pausing at the bottom of the dip, which kills the drive.', 'Dropping the weight down instead of lowering it.'],
+    why: 'Power, the ability to produce force quickly, declines faster with age than strength and predicts function better. Moving a moderate load fast trains it. The slow lowering keeps the spine loading of the overhead press.',
+    refs: ['nsca', 'reid'],
+    keys: [
+      { ua: 5, fa: 175, fas: 0.75, d: 0.7, props: [DB('W'), DB('W2')] },
+      { s: 16, t: -22, b: 4, ua: 5, fa: 175, fas: 0.75, d: 0.3, props: [DB('W'), DB('W2')] },
+      { ua: 175, fa: 178, b: -3, d: 0.5, props: [DB('W'), DB('W2')] },
+      { ua: 175, fa: 178, b: -3, d: 1.1, props: [DB('W'), DB('W2')] }
+    ]
+  },
+  row_1arm: {
+    name: 'One-arm dumbbell row', pattern: 'Pull', load: 'db1', unit: 'reps', sides: true, start: 12, inc: 5,
+    equipment: 'One dumbbell, flat bench', evidence: 'indirect',
+    cues: ['Put one knee and the same-side hand on the bench, other foot on the floor, back flat and parallel to the floor.', 'Let the dumbbell hang straight down from the shoulder, then pull it to your hip, elbow close to your side.', 'Squeeze the shoulder blade at the top, then lower slowly to a full stretch.', 'Do all reps on one side, then switch.'],
+    faults: ['Twisting the torso to heave the weight.', 'Pulling to the chest instead of the hip.', 'Shrugging the shoulder toward the ear.'],
+    why: 'Rowing balances all the pressing, keeps the shoulders healthy, and builds the upper-back strength that holds the spine tall. Bone effect at the hip is indirect; postural strength is the payoff.',
+    refs: ['nsca', 'acsm'],
+    base: { ax: 60, s: 5, t: -30, b: 80, hd: -15, t2: -40, s2: 90, ft2: 60, ua2: 20, fa2: 20 },
+    keys: [
+      { ua: -5, fa: -5, d: 1.0, props: [{ type: 'bench', x: 60, y: 136, w: 110, h: 40 }, DB('W')] },
+      { ua: -60, fa: 30, d: 0.4, props: [{ type: 'bench', x: 60, y: 136, w: 110, h: 40 }, DB('W')] },
+      { ua: -60, fa: 30, d: 1.1, props: [{ type: 'bench', x: 60, y: 136, w: 110, h: 40 }, DB('W')] },
+      { ua: -5, fa: -5, d: 0.5, props: [{ type: 'bench', x: 60, y: 136, w: 110, h: 40 }, DB('W')] }
+    ]
+  },
+  band_row: {
+    name: 'Band row', pattern: 'Pull', load: 'band', unit: 'reps', start: null,
+    equipment: 'Loop band anchored at waist height', evidence: 'indirect',
+    cues: ['Anchor the band around a post or in a closed door at about waist height. Step back until it is taut with arms straight.', 'Stand tall, knees soft. Pull the band to your lower ribs, elbows sliding past your sides.', 'Squeeze the shoulder blades together, then let the arms straighten slowly.', 'To progress: step further back, or use the next-heavier band.'],
+    faults: ['Leaning back to pull.', 'Shrugging the shoulders.', 'Letting the band snap the arms forward.'],
+    why: 'The first pulling exercise, easy to learn and easy on the joints. It builds the upper back and shoulder strength that keeps posture tall; bone effect at the hip and spine is indirect.',
+    refs: ['nsca'],
+    base: { s: 8, t: -5, b: 5 },
+    keys: [
+      { ua: 80, fa: 85, d: 0.9, props: [{ type: 'wall', x: 226, y: 30, w: 6, h: 146 }, { type: 'band', pts: [[226, 50], 'W'] }] },
+      { ua: -40, fa: 40, d: 0.4, props: [{ type: 'wall', x: 226, y: 30, w: 6, h: 146 }, { type: 'band', pts: [[226, 50], 'W'] }] },
+      { ua: -40, fa: 40, d: 0.9, props: [{ type: 'wall', x: 226, y: 30, w: 6, h: 146 }, { type: 'band', pts: [[226, 50], 'W'] }] },
+      { ua: 80, fa: 85, d: 0.5, props: [{ type: 'wall', x: 226, y: 30, w: 6, h: 146 }, { type: 'band', pts: [[226, 50], 'W'] }] }
+    ]
+  },
+  pull_apart: {
+    name: 'Band pull-apart', pattern: 'Pull, shoulder health', load: 'band', unit: 'reps', start: null, view: 'front',
+    equipment: 'Loop band', evidence: 'indirect',
+    cues: ['Hold the band in front of you at shoulder height, hands shoulder width, arms straight.', 'Pull the band apart until it touches your chest, squeezing the shoulder blades together.', 'Return slowly. Keep the ribs down and the neck long.', 'Light band, smooth reps.'],
+    faults: ['Shrugging.', 'Arching the back to finish the rep.'],
+    why: 'Keeps the shoulders and upper back strong and open, which protects posture as loads rise. Indirect for bone; direct for shoulder health.',
+    refs: ['nsca'],
+    keys: [
+      { ual: -55, uar: -55, fal: -80, far: -80, uals: 0.28, uars: 0.28, fals: 0.28, fars: 0.28, d: 0.8, props: [{ type: 'band', pts: ['WL', 'WR'] }] },
+      { ual: 86, uar: 86, fal: 86, far: 86, d: 0.4, props: [{ type: 'band', pts: ['WL', 'WR'] }] },
+      { ual: 86, uar: 86, fal: 86, far: 86, d: 0.8, props: [{ type: 'band', pts: ['WL', 'WR'] }] },
+      { ual: -55, uar: -55, fal: -80, far: -80, uals: 0.28, uars: 0.28, fals: 0.28, fars: 0.28, d: 0.5, props: [{ type: 'band', pts: ['WL', 'WR'] }] }
+    ]
+  },
+  farmer_carry: {
+    name: 'Farmer carry', pattern: 'Carry', load: 'db2', unit: 'sec', start: 15, inc: 5,
+    equipment: 'Two dumbbells', evidence: 'moderate',
+    cues: ['Pick up a dumbbell in each hand with a flat back. Stand tall, shoulders down and back.', 'Walk with short, steady steps, eyes forward. Breathe.', 'Set the dumbbells down with a hinge, never a rounded back.', 'When the time feels easy, add weight before you add seconds.'],
+    faults: ['Leaning or letting one shoulder drop.', 'Holding the breath.', 'Rushing the steps.'],
+    why: 'Carrying heavy things while walking loads the hips and spine with every step, trains the grip, and builds the specific strength of daily life. Evidence for the carry itself is thinner than for the big lifts, but it fits the ESSA guidance on weight-bearing loading.',
+    refs: ['essa', 'nsca'],
+    keys: [
+      { t2: -22, s2: 12, ay: 171, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] },
+      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] },
+      { t2: 22, s2: 0, ay: 171, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] },
+      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] }
+    ]
+  },
+  suitcase_carry: {
+    name: 'Suitcase carry', pattern: 'Carry, one side', load: 'db1', unit: 'sec', sides: true, start: 15, inc: 5,
+    equipment: 'One dumbbell', evidence: 'moderate',
+    cues: ['Hold one dumbbell at your side like a suitcase. Stand tall; do not let the weight tip you sideways.', 'Walk with short, even steps for the time, then switch hands.', 'The free hand stays relaxed; the work is in keeping the torso perfectly upright.'],
+    faults: ['Leaning away from the weight.', 'Shrugging the loaded shoulder.'],
+    why: 'The offset load makes the trunk muscles fight to keep the spine vertical, a neutral-spine core exercise, while the hip on the loaded side works harder with every step.',
+    refs: ['essa', 'nsca'],
+    keys: [
+      { t2: -22, s2: 12, ay: 171, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] },
+      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] },
+      { t2: 22, s2: 0, ay: 171, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] },
+      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] }
+    ]
+  },
+  glute_bridge: {
+    name: 'Glute bridge', pattern: 'Hip extension', load: 'bw', unit: 'reps', start: null,
+    equipment: 'Mat', evidence: 'moderate',
+    cues: ['Lie on your back, knees bent, feet flat and hip width, heels a hand-span from your bottom.', 'Push through the heels and squeeze the glutes to lift the hips until knees, hips and shoulders form a straight line.', 'Hold for a breath, then lower slowly.', 'Ribs stay down; do not arch the lower back to get higher.'],
+    faults: ['Arching the back instead of squeezing the glutes.', 'Pushing through the toes.', 'Hips dropping on one side.'],
+    why: 'Teaches the glutes to extend the hip, the foundation for the hinge and for climbing stairs. Progresses to the loaded hip thrust, which puts a dumbbell directly over the hip joint.',
+    refs: ['nsca'],
+    base: { ax: 150, s: 10, ua: 85, fa: 85 },
+    keys: [
+      { t: -130, b: -95, hd: 0, d: 0.9 },
+      { t: -95, b: -126, hd: 40, d: 0.4 },
+      { t: -95, b: -126, hd: 40, d: 0.9 },
+      { t: -130, b: -95, hd: 0, d: 0.5 }
+    ]
+  },
+  hip_thrust: {
+    name: 'Dumbbell hip thrust', pattern: 'Hip extension', load: 'db1', unit: 'reps', start: 20, inc: 5,
+    equipment: 'One dumbbell, flat bench', evidence: 'moderate',
+    cues: ['Sit on the floor with your upper back against the long side of the bench, knees bent, feet flat.', 'Rest a dumbbell across your hips (a folded towel under it helps).', 'Drive through the heels to lift the hips until your thighs are parallel to the floor, chin tucked, ribs down.', 'Squeeze at the top for a beat, then lower under control.'],
+    faults: ['Arching the back and pushing the ribs up.', 'Looking up at the ceiling, which arches the neck.', 'Feet too far forward, which shifts the work to the hamstrings.'],
+    why: 'Loads the hip joint directly with the heaviest single dumbbell you own, working the glutes, the muscles that pull on the femur. The femoral neck is where hip fractures happen and where loading needs to reach.',
+    refs: ['essa', 'nsca'],
+    base: { ax: 150, s: 10, ua: -95, fa: -80 },
+    keys: [
+      { t: -105, b: -66, hd: 80, d: 0.9, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
+      { t: -85, b: -63, hd: 60, d: 0.4, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
+      { t: -85, b: -63, hd: 60, d: 0.9, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
+      { t: -105, b: -66, hd: 80, d: 0.5, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] }
+    ]
+  },
+  step_up: {
+    name: 'Step-up', pattern: 'Squat, single leg', load: 'db2', unit: 'reps', sides: true, start: null, inc: 5,
+    equipment: 'A sturdy step or low box (start with a stair), dumbbells later', evidence: 'moderate',
+    cues: ['Place one whole foot on the step. Lean slightly toward it.', 'Push through that heel to stand up tall on the step; do not push off the back foot.', 'Tap the top with the trailing foot, then lower slowly on the same working leg.', 'Do all reps on one leg, then switch. Add dumbbells or a weighted vest when the bodyweight version is easy.'],
+    faults: ['Bouncing off the floor with the back leg.', 'Knee of the working leg caving inward.', 'Leaning the torso far forward.'],
+    why: 'Single-leg pushing that mirrors stairs and hills. With a weighted vest it becomes the kind of loaded stepping that maintained hip bone density over five years in the Snow trial.',
+    refs: ['snow', 'sherrington', 'nsca'],
+    keys: [
+      { ax: 165, ay: 141, s: 45, t: -60, b: 15, t2: 22, s2: 22, ft2: 0, ua: 5, fa: 5, d: 1.0, props: [STEP_FRONT, DB('W'), DB('W2')] },
+      { ax: 165, ay: 141, s: 0, t: 0, b: 0, t2: 5, s2: 0, ft2: 0, ua: 5, fa: 5, d: 0.3, props: [STEP_FRONT, DB('W'), DB('W2')] },
+      { ax: 165, ay: 141, s: 0, t: 0, b: 0, t2: 5, s2: 0, ft2: 0, ua: 5, fa: 5, d: 0.8, props: [STEP_FRONT, DB('W'), DB('W2')] },
+      { ax: 165, ay: 141, s: 45, t: -60, b: 15, t2: 22, s2: 22, ft2: 0, ua: 5, fa: 5, d: 0.5, props: [STEP_FRONT, DB('W'), DB('W2')] }
+    ]
+  },
+  heel_drops: {
+    name: 'Heel drops', pattern: 'Impact, gentle', load: 'bw', unit: 'reps', start: null, impact: 1,
+    equipment: 'A wall or counter for a fingertip touch', evidence: 'strong',
+    cues: ['Stand tall with fingertips on a wall or counter for balance.', 'Rise up onto the balls of your feet, then let your heels drop to the floor with a firm, quick landing, knees soft.', 'The jolt through the heels is the point; make it crisp but not painful.', 'Pause a moment between drops.'],
+    faults: ['Landing so softly there is no impact at all.', 'Locking the knees.'],
+    why: 'Bone responds to brief, unusual jolts more than to steady effort. Heel drops give a low-level impact through the heel, leg and spine that is safe even when bone status is unknown, and they are the gentlest rung on the impact ladder recommended by ESSA.',
+    refs: ['essa', 'bailey'],
+    keys: [
+      { ua: 60, fa: 70, d: 0.8, props: [{ type: 'wall', x: 164, y: 60, w: 6, h: 116 }] },
+      { ax: 120, ay: 163, ft: 30, ft2: 30, ua: 60, fa: 70, d: 0.35, props: [{ type: 'wall', x: 164, y: 60, w: 6, h: 116 }] },
+      { ax: 120, ay: 163, ft: 30, ft2: 30, ua: 60, fa: 70, d: 0.12, props: [{ type: 'wall', x: 164, y: 60, w: 6, h: 116 }] },
+      { s: 6, t: -6, ua: 60, fa: 70, d: 0.7, props: [{ type: 'wall', x: 164, y: 60, w: 6, h: 116 }] }
+    ]
+  },
+  hops: {
+    name: 'Two-foot hops', pattern: 'Impact, moderate', load: 'bw', unit: 'reps', start: null, impact: 2,
+    equipment: 'None', evidence: 'strong',
+    cues: ['Feet hip width, knees soft, arms relaxed.', 'Dip a little and hop straight up a few inches, landing on the whole foot with soft knees, quietly but firmly.', 'Reset between hops; these are single hops, not bouncing.', 'Ten crisp hops beat thirty sloppy ones.'],
+    faults: ['Landing on locked knees.', 'Knees caving inward on landing.', 'Bouncing continuously without resetting.'],
+    why: 'Jumping delivers ground reaction forces of several times body weight, the stimulus that grew hip bone in trials of hopping and jumping in postmenopausal women. Fifty impacts a session, several days a week, is the dose in the ESSA guidance; the app builds toward it.',
+    refs: ['essa', 'bailey'],
+    keys: [
+      { s: 16, t: -26, b: 16, ua: -35, fa: -35, d: 0.22 },
+      { ay: 150, ft: 30, ft2: 30, ua: 50, fa: 55, d: 0.3 },
+      { s: 16, t: -26, b: 16, ua: 10, fa: 10, d: 0.5 },
+      { d: 0.6 }
+    ]
+  },
+  drop_landing: {
+    name: 'Drop landing', pattern: 'Impact, higher', load: 'bw', unit: 'reps', start: null, impact: 3,
+    equipment: 'A step or box 6 to 8 inches high', evidence: 'strong',
+    cues: ['Stand on the step, feet hip width.', 'Step off (do not jump) and land on both feet at once, whole foot, knees soft, chest up.', 'Stick the landing and hold it for a second. Then step back up and repeat.', 'Start from a stair-height step; raise it only when landings are quiet and stable.'],
+    faults: ['Landing on the toes or with straight knees.', 'Knees caving inward.', 'Letting the chest collapse forward.'],
+    why: 'The drop landing was the impact element of LIFTMOR, where participants dropped from a jumping chin-up and landed as firmly as was comfortable. It gives the highest ground reaction force in this program, so it stays locked until bone status is known to be normal.',
+    refs: ['liftmor', 'essa'],
+    keys: [
+      { ax: 80, ay: 149, s: 10, t: -10, ua: -10, fa: -10, d: 0.4, props: [{ type: 'step', x: 40, y: 154, w: 62, h: 22 }] },
+      { ax: 102, ay: 147, s: 6, t: -6, t2: -45, s2: 30, ft2: 15, ua: 15, fa: 15, d: 0.32, props: [{ type: 'step', x: 40, y: 154, w: 62, h: 22 }] },
+      { ax: 134, ay: 171, s: 22, t: -42, b: 26, ua: 30, fa: 30, d: 0.6, props: [{ type: 'step', x: 40, y: 154, w: 62, h: 22 }] },
+      { ax: 134, ay: 171, d: 0.7, props: [{ type: 'step', x: 40, y: 154, w: 62, h: 22 }] },
+      { ax: 134, ay: 171, d: 0.9, props: [{ type: 'step', x: 40, y: 154, w: 62, h: 22 }] }
+    ]
+  },
+  dead_bug: {
+    name: 'Dead bug', pattern: 'Trunk, neutral spine', load: 'bw', unit: 'reps', sides: true, start: null,
+    equipment: 'Mat', evidence: 'indirect',
+    cues: ['Lie on your back, knees over hips, shins parallel to the floor, arms pointing at the ceiling.', 'Press your lower back gently into the floor and keep it there.', 'Slowly lower one heel toward the floor while the opposite arm reaches overhead. Stop before the back arches.', 'Return and switch sides. Breathe out as you extend.'],
+    faults: ['Lower back lifting off the floor.', 'Moving fast.', 'Holding the breath.'],
+    why: 'Trains the trunk to hold a neutral spine while the limbs move, which is exactly the skill the lifts require. ESSA advises against loaded spinal flexion (crunches) for bone health; this is the alternative.',
+    refs: ['essa'],
+    base: { ax: 158, ay: 118, s: -90, t: 180, b: -90, hd: 0, ua: 180, fa: 180, ua2: 180, fa2: 180, t2: 180, s2: -90 },
+    keys: [
+      { d: 0.9 },
+      { s: -102, t: -102, ax: 198, ay: 143, ua2: -100, fa2: -100, d: 0.4 },
+      { s: -102, t: -102, ax: 198, ay: 143, ua2: -100, fa2: -100, d: 0.9 },
+      { d: 0.4 },
+      { d: 0.9 },
+      { t2: -102, s2: -102, ua: -100, fa: -100, d: 0.4 },
+      { t2: -102, s2: -102, ua: -100, fa: -100, d: 0.9 }
+    ]
+  },
+  bird_dog: {
+    name: 'Bird dog', pattern: 'Trunk, neutral spine', load: 'bw', unit: 'reps', sides: true, start: null,
+    equipment: 'Mat', evidence: 'indirect',
+    cues: ['On hands and knees, wrists under shoulders, knees under hips, back flat like a table.', 'Reach one arm forward and the opposite leg back until both are level with your torso. Nothing else moves.', 'Hold for a breath, then return and switch. Imagine balancing a glass of water on your lower back.'],
+    faults: ['Hips rotating as the leg lifts.', 'Lifting the leg above hip height and arching.', 'Sagging between the shoulder blades.'],
+    why: 'Builds the back and hip extensor endurance that keeps the spine tall under load, without spinal flexion. A standard neutral-spine core exercise.',
+    refs: ['essa', 'nsca'],
+    base: { ax: 60, s: 90, t: 0, b: 90, hd: 0, t2: 0, s2: 90, ft2: 60 },
+    keys: [
+      { d: 0.9 },
+      { t2: 90, s2: 90, ua: 90, fa: 90, d: 1.2 },
+      { t2: 90, s2: 90, ua: 90, fa: 90, d: 0.9 },
+      { d: 0.6 }
+    ]
+  },
+  plank: {
+    name: 'Forearm plank', pattern: 'Trunk, neutral spine', load: 'bw', unit: 'sec', start: null,
+    equipment: 'Mat', evidence: 'indirect',
+    cues: ['Forearms on the floor, elbows under shoulders, toes tucked, body in one line.', 'Squeeze the glutes and brace the stomach as if about to be poked.', 'Breathe steadily. Stop when the hips sag; that is the end of the set, not the timer.'],
+    faults: ['Hips sagging or piking.', 'Head dropping.', 'Holding the breath.'],
+    why: 'Isometric trunk endurance with a neutral spine. Useful, but not a bone builder; it is here to support the lifts.',
+    refs: ['nsca'],
+    base: { ax: 62, ay: 163, ft: 30, ft2: 30, s: 82, t: 82, b: 82, hd: 0, ua: 0, fa: 90 },
+    keys: [ { d: 1.8 }, { b: 80.5, d: 1.8 } ]
+  },
+  pallof: {
+    name: 'Pallof press', pattern: 'Trunk, anti-rotation', load: 'band', unit: 'reps', sides: true, start: null, view: 'front',
+    equipment: 'Loop band anchored at chest height', evidence: 'indirect',
+    cues: ['Anchor the band at chest height to your side. Hold it with both hands at the center of your chest, feet shoulder width.', 'Press the hands straight out in front of you and hold for two seconds. The band will try to twist you; do not let it.', 'Bring the hands back to the chest. Do all reps, then face the other way.'],
+    faults: ['Rotating toward the anchor as the arms extend.', 'Leaning away from the anchor.'],
+    why: 'Anti-rotation training for the trunk with the spine held still, the kind of core work ESSA favors over flexion.',
+    refs: ['essa'],
+    keys: [
+      { ual: -20, uar: 30, fal: -70, far: -50, uals: 0.55, uars: 0.55, fals: 0.7, fars: 0.7, kl: 12, kr: 12, tl: 12, tr: 12, d: 0.8, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] },
+      { ual: -5, uar: 5, fal: -6, far: 6, uals: 0.3, uars: 0.3, fals: 0.3, fars: 0.3, kl: 12, kr: 12, tl: 12, tr: 12, d: 0.4, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] },
+      { ual: -5, uar: 5, fal: -6, far: 6, uals: 0.3, uars: 0.3, fals: 0.3, fars: 0.3, kl: 12, kr: 12, tl: 12, tr: 12, d: 1.2, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] },
+      { ual: -20, uar: 30, fal: -70, far: -50, uals: 0.55, uars: 0.55, fals: 0.7, fars: 0.7, kl: 12, kr: 12, tl: 12, tr: 12, d: 0.5, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] }
+    ]
+  },
+  db_swing: {
+    name: 'Dumbbell swing', pattern: 'Power, hinge', load: 'db1', unit: 'reps', start: 15, inc: 5,
+    equipment: 'One dumbbell', evidence: 'moderate',
+    cues: ['Hold one dumbbell by the end with both hands, feet a little wider than shoulder width.', 'Hinge: hips back, flat back, and let the dumbbell swing back between your thighs.', 'Snap the hips forward hard so the dumbbell floats up to chest height. The arms are ropes; the hips do the work.', 'Let it fall back into the next hinge and repeat rhythmically.'],
+    faults: ['Squatting instead of hinging.', 'Lifting with the arms and shoulders.', 'Rounding the back at the bottom.'],
+    why: 'The fast hinge trains hip power, which declines quickly with age and predicts how well people get out of chairs, climb stairs and recover from a stumble.',
+    refs: ['nsca', 'reid'],
+    keys: [
+      { s: 12, t: -26, b: 74, ua: -22, fa: -32, d: 0.32, props: [DB('W', { w: 9, h: 14 })] },
+      { ua: 88, fa: 90, d: 0.22, props: [DB('W', { w: 9, h: 14 })] },
+      { ua: 88, fa: 90, d: 0.5, props: [DB('W', { w: 9, h: 14 })] },
+      { s: 12, t: -26, b: 74, ua: -22, fa: -32, d: 0.16, props: [DB('W', { w: 9, h: 14 })] }
+    ]
+  },
+  tandem_walk: {
+    name: 'Heel-to-toe walk', pattern: 'Balance', load: 'bw', unit: 'reps', start: null, balance: true,
+    equipment: 'A hallway or a line on the floor', evidence: 'strong',
+    cues: ['Walk a straight line placing the heel of one foot directly against the toes of the other.', 'Eyes on a point ahead, arms out if you need them.', 'Ten steps forward, turn, ten steps back. Slow is the point.', 'Harder: arms crossed on your chest, or eyes closed for a few steps with a wall beside you.'],
+    faults: ['Looking down at the feet.', 'Rushing.'],
+    why: 'Balance training that challenges you is the exercise ingredient with the strongest evidence for preventing falls, reducing the rate of falls by about a quarter in the Cochrane review.',
+    refs: ['sherrington'],
+    keys: [
+      { ax: 100, t2: 12, s2: 8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
+      { ax: 100, t2: -42, s2: 34, ft2: 20, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
+      { ax: 100, t2: -12, s2: -8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.6 },
+      { ax: 122, t2: 12, s2: 8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
+      { ax: 122, t2: -42, s2: 34, ft2: 20, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
+      { ax: 122, t2: -12, s2: -8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 1.1 }
+    ]
+  },
+  sl_stance: {
+    name: 'Single-leg stand', pattern: 'Balance', load: 'bw', unit: 'sec', sides: true, start: null, balance: true, view: 'front',
+    equipment: 'A wall or counter within reach', evidence: 'strong',
+    cues: ['Stand near a wall. Lift one foot a few inches and balance for the time.', 'Stand tall, eyes on a fixed point, breathe normally.', 'Progress in this order: eyes open, then arms crossed, then eyes closed, then standing on a folded towel or cushion.', 'Touch down and restart if you wobble; the wobbles are the training.'],
+    faults: ['Holding the breath.', 'Leaning on the wall the whole time.'],
+    why: 'Static balance with progressions is a core part of the fall-prevention programs that work. Falls, not bone density alone, are what produce most fractures.',
+    refs: ['sherrington', 'essa'],
+    keys: [
+      { kl: 60, sl: 8, lt: 1.5, ual: 60, uar: 60, fal: 60, far: 60, d: 1.6 },
+      { kl: 60, sl: 8, lt: -1.5, ual: 62, uar: 58, fal: 62, far: 58, d: 1.6 }
+    ]
+  },
+  lateral_walk: {
+    name: 'Banded lateral walk', pattern: 'Hip abduction', load: 'band', unit: 'reps', sides: true, start: null, view: 'front',
+    equipment: 'Loop band around the ankles or just above the knees', evidence: 'moderate',
+    cues: ['Band around your ankles, feet hip width, knees softly bent, hips back a little.', 'Step sideways with one foot, then follow with the other, keeping tension on the band the whole time.', 'Stay low and level; do not bob up and down. Ten steps one way, ten back.'],
+    faults: ['Knees caving inward.', 'Standing up tall between steps.', 'Dragging the trailing foot.'],
+    why: 'Strengthens the hip abductors that stabilize the pelvis on one leg. Weak abductors show up as a hip drop when walking and are linked to falls; the side-to-side loading also strains the femoral neck in an unaccustomed direction.',
+    refs: ['essa', 'sherrington'],
+    keys: [
+      { px: 100, tl: 8, tr: 8, kl: 18, kr: 18, ual: 20, uar: 20, fal: -40, far: -40, d: 0.5, props: [{ type: 'band', pts: ['al', 'ar'] }] },
+      { px: 100, tl: 8, tr: 34, kl: 18, kr: 18, ual: 20, uar: 20, fal: -40, far: -40, d: 0.5, props: [{ type: 'band', pts: ['al', 'ar'] }] },
+      { px: 122, tl: 34, tr: 8, kl: 18, kr: 18, ual: 20, uar: 20, fal: -40, far: -40, d: 0.5, props: [{ type: 'band', pts: ['al', 'ar'] }] },
+      { px: 122, tl: 8, tr: 8, kl: 18, kr: 18, ual: 20, uar: 20, fal: -40, far: -40, d: 0.5, props: [{ type: 'band', pts: ['al', 'ar'] }] },
+      { px: 122, tl: 34, tr: 8, kl: 18, kr: 18, ual: 20, uar: 20, fal: -40, far: -40, d: 0.5, props: [{ type: 'band', pts: ['al', 'ar'] }] },
+      { px: 100, tl: 8, tr: 34, kl: 18, kr: 18, ual: 20, uar: 20, fal: -40, far: -40, d: 0.5, props: [{ type: 'band', pts: ['al', 'ar'] }] }
+    ]
+  },
+  march: {
+    name: 'March in place', pattern: 'Warm-up', load: 'bw', unit: 'sec', start: null, warm: true,
+    equipment: 'None', evidence: 'indirect',
+    cues: ['Lift the knees to hip height, swing the arms, breathe.', 'Build a little heat; this should feel easy.'],
+    faults: [],
+    why: 'Raises muscle temperature and heart rate before loading.', refs: ['nsca'],
+    keys: [
+      { t2: -70, s2: 30, ft2: 10, ay: 170, ua: -30, fa: -20, ua2: 35, fa2: 60, d: 0.4 },
+      { t2: 0, s2: 0, ay: 171, ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.4 },
+      { t2: -70, s2: 30, ft2: 10, ay: 170, ua: 35, fa: 60, ua2: -30, fa2: -20, d: 0.4 },
+      { t2: 0, s2: 0, ay: 171, ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.4 }
+    ]
+  },
+  arm_circles: {
+    name: 'Arm circles', pattern: 'Warm-up', load: 'bw', unit: 'sec', start: null, warm: true,
+    equipment: 'None', evidence: 'indirect',
+    cues: ['Big slow circles forward, then backward.', 'Reach through the fingertips; keep the ribs down.'],
+    faults: [],
+    why: 'Warms the shoulders before pressing and pulling.', refs: ['nsca'],
+    keys: [
+      { ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.45 }, { ua: 90, fa: 90, ua2: 90, fa2: 90, d: 0.45 },
+      { ua: 180, fa: 180, ua2: 180, fa2: 180, d: 0.45 }, { ua: 270, fa: 270, ua2: 270, fa2: 270, d: 0.45 },
+      { ua: 360, fa: 360, ua2: 360, fa2: 360, d: 0.02 }
+    ]
+  }
+};
+
+Object.assign(EXERCISES.box_squat, { harder: 'That was easy: lower for a slow four count, or hold a light dumbbell at your chest.' });
+Object.assign(EXERCISES.incline_pushup, { harder: 'That was easy: walk your feet further back, or use a lower surface than the bench.' });
+Object.assign(EXERCISES.glute_bridge, { harder: 'That was easy: pause for three seconds at the top, or rest a dumbbell across your hips.' });
+Object.assign(EXERCISES.step_up, { harder: 'That was easy: hold dumbbells, or use a higher step.' });
+Object.assign(EXERCISES.dead_bug, { harder: 'That was easy: slow each rep to a four count with a full exhale.' });
+Object.assign(EXERCISES.bird_dog, { harder: 'That was easy: hold each rep for five slow breaths.' });
+Object.assign(EXERCISES.plank, { harder: 'That was easy: add ten seconds next time.' });
+
+/* Program: five levels, three full-body workouts each (A, B, C). */
+const LEVELS = {
+  1: { minutes: 10, sets: 2, mainSets: 2, reps: [8, 10], mainReps: [8, 10], rest: 40, mainRest: 50,
+       about: 'Two sets of three movements. The goal is to learn the patterns, show up, and finish feeling like you could do more.' },
+  2: { minutes: 20, sets: 2, mainSets: 3, reps: [8, 12], mainReps: [8, 12], rest: 45, mainRest: 60,
+       about: 'Three sets, four movements, and weight on the main lifts. Loads start climbing here.' },
+  3: { minutes: 30, sets: 3, mainSets: 3, reps: [8, 12], mainReps: [6, 10], rest: 50, mainRest: 90,
+       about: 'Five movements, heavier main lifts in a lower rep range, single-leg work, and moderate impact if bone status allows.' },
+  4: { minutes: 45, sets: 3, mainSets: 4, reps: [8, 12], mainReps: [5, 8], rest: 60, mainRest: 120,
+       about: 'Six movements. Four heavy sets of the main lift, the dumbbell deadlift and front squat arrive, and power work begins.' },
+  5: { minutes: 60, sets: 3, mainSets: 5, reps: [6, 10], mainReps: [5, 5], rest: 60, mainRest: 150,
+       about: 'The full program: five sets of five on the main lift, the scheme that raised bone density in the LIFTMOR trial, plus everything around it.' }
+};
+
+/* Entry fields: id, main (heavy scheme), ess (kept in the essentials-only version), sets/reps/secs overrides, variant note */
+const WORKOUTS = {
+  1: {
+    A: { title: 'Legs and push', list: [
+      { id: 'box_squat', main: true, ess: true },
+      { id: 'incline_pushup', ess: true },
+      { id: 'farmer_carry', secs: 20 } ], balance: { id: 'sl_stance', sets: 1, secs: 20 } },
+    B: { title: 'Hips and pull', list: [
+      { id: 'rdl', main: true, ess: true },
+      { id: 'band_row', ess: true, reps: [10, 15] },
+      { id: 'glute_bridge', reps: [10, 12] } ], balance: { id: 'tandem_walk', sets: 2, reps: [10, 10] } },
+    C: { title: 'Overhead and carry', list: [
+      { id: 'ohp', main: true, ess: true },
+      { id: 'suitcase_carry', ess: true, secs: 20 },
+      { id: 'dead_bug', reps: [6, 8] } ], balance: { id: 'sl_stance', sets: 1, secs: 20 } }
+  },
+  2: {
+    A: { title: 'Legs and push', list: [
+      { id: 'goblet_squat', main: true, ess: true },
+      { id: 'incline_pushup', ess: true },
+      { id: 'farmer_carry', ess: true, secs: 30 },
+      { id: 'glute_bridge', reps: [10, 15] } ], balance: { id: 'sl_stance', sets: 1, secs: 30 } },
+    B: { title: 'Hips and pull', list: [
+      { id: 'rdl', main: true, ess: true },
+      { id: 'row_1arm', ess: true },
+      { id: 'hip_thrust', reps: [8, 12] },
+      { id: 'pull_apart', reps: [12, 15] } ], balance: { id: 'tandem_walk', sets: 1, reps: [10, 10] } },
+    C: { title: 'Overhead and carry', list: [
+      { id: 'ohp', main: true, ess: true },
+      { id: 'step_up', ess: true, reps: [8, 10], variant: 'Bodyweight, on a stair' },
+      { id: 'suitcase_carry', secs: 25 },
+      { id: 'dead_bug', reps: [8, 10] } ], balance: { id: 'sl_stance', sets: 1, secs: 30 } }
+  },
+  3: {
+    A: { title: 'Legs and push', list: [
+      { id: 'goblet_squat', main: true, ess: true },
+      { id: 'bench_press', ess: true },
+      { id: 'step_up', ess: true, reps: [8, 10], variant: 'Hold light dumbbells' },
+      { id: 'farmer_carry', secs: 40 },
+      { id: 'dead_bug', reps: [8, 10] } ], balance: { id: 'sl_stance', sets: 1, secs: 30, variant: 'Arms crossed on your chest' } },
+    B: { title: 'Hips and pull', list: [
+      { id: 'rdl', main: true, ess: true },
+      { id: 'row_1arm', ess: true },
+      { id: 'hip_thrust', ess: true, reps: [8, 12] },
+      { id: 'lateral_walk', reps: [10, 12] },
+      { id: 'bird_dog', reps: [8, 10] } ], balance: { id: 'tandem_walk', sets: 1, reps: [10, 10], variant: 'Arms crossed' } },
+    C: { title: 'Overhead and single leg', list: [
+      { id: 'ohp', main: true, ess: true },
+      { id: 'split_squat', ess: true, reps: [8, 10] },
+      { id: 'band_row', reps: [10, 15] },
+      { id: 'suitcase_carry', secs: 30 },
+      { id: 'pallof', reps: [8, 10] } ], balance: { id: 'sl_stance', sets: 1, secs: 30, variant: 'Arms crossed on your chest' } }
+  },
+  4: {
+    A: { title: 'Squat and push', list: [
+      { id: 'front_squat', main: true, ess: true },
+      { id: 'bench_press', ess: true },
+      { id: 'split_squat', ess: true, reps: [8, 10] },
+      { id: 'suitcase_carry', secs: 30 },
+      { id: 'pallof', reps: [8, 10] },
+      { id: 'dead_bug', reps: [8, 10] } ], balance: { id: 'tandem_walk', sets: 2, reps: [10, 10], variant: 'Eyes closed for the last three steps, wall beside you' } },
+    B: { title: 'Deadlift and pull', list: [
+      { id: 'deadlift', main: true, ess: true },
+      { id: 'row_1arm', ess: true },
+      { id: 'hip_thrust', ess: true, reps: [8, 12] },
+      { id: 'sl_rdl', reps: [8, 10] },
+      { id: 'pull_apart', reps: [12, 15] },
+      { id: 'bird_dog', reps: [8, 10] } ], balance: { id: 'sl_stance', sets: 2, secs: 30, variant: 'Eyes closed, wall within reach' } },
+    C: { title: 'Power and carry', list: [
+      { id: 'push_press', main: true, ess: true },
+      { id: 'goblet_squat', ess: true, reps: [8, 10] },
+      { id: 'band_row', ess: true, reps: [10, 15] },
+      { id: 'step_up', reps: [8, 10], variant: 'Hold dumbbells; fast up, slow down' },
+      { id: 'farmer_carry', secs: 40 },
+      { id: 'plank', secs: 30 } ], balance: { id: 'sl_stance', sets: 2, secs: 30, variant: 'Eyes closed, wall within reach' } }
+  },
+  5: {
+    A: { title: 'Squat and push', list: [
+      { id: 'front_squat', main: true, ess: true },
+      { id: 'bench_press', ess: true, sets: 4, reps: [6, 8] },
+      { id: 'split_squat', ess: true, reps: [6, 10] },
+      { id: 'step_up', reps: [6, 10], variant: 'Weighted vest or dumbbells' },
+      { id: 'suitcase_carry', secs: 40 },
+      { id: 'pallof', reps: [8, 10] } ], balance: { id: 'tandem_walk', sets: 2, reps: [10, 10], variant: 'Eyes closed, wall beside you' } },
+    B: { title: 'Deadlift and pull', list: [
+      { id: 'deadlift', main: true, ess: true },
+      { id: 'row_1arm', ess: true, sets: 4, reps: [6, 8] },
+      { id: 'hip_thrust', ess: true, sets: 4, reps: [6, 10] },
+      { id: 'sl_rdl', reps: [6, 10] },
+      { id: 'db_swing', reps: [10, 12] },
+      { id: 'pull_apart', reps: [12, 15] },
+      { id: 'bird_dog', sets: 1, reps: [8, 10] } ], balance: { id: 'sl_stance', sets: 2, secs: 40, variant: 'On a folded towel, eyes open' } },
+    C: { title: 'Power and carry', list: [
+      { id: 'push_press', main: true, ess: true },
+      { id: 'goblet_squat', ess: true, reps: [6, 10] },
+      { id: 'band_row', ess: true, reps: [10, 15] },
+      { id: 'farmer_carry', sets: 4, secs: 40 },
+      { id: 'lateral_walk', sets: 2, reps: [10, 12] },
+      { id: 'dead_bug', sets: 1, reps: [8, 10] },
+      { id: 'plank', sets: 2, secs: 45 } ], balance: { id: 'sl_stance', sets: 2, secs: 40, variant: 'On a folded towel' } }
+  }
+};
+
+const WARMUPS = {
+  1: [ { id: 'march', secs: 40 }, { id: 'hinge_bw', reps: 8 }, { id: 'box_squat', reps: 5, bw: true }, { id: 'arm_circles', secs: 20 } ],
+  2: [ { id: 'march', secs: 60 }, { id: 'hinge_bw', reps: 8 }, { id: 'box_squat', reps: 8, bw: true }, { id: 'arm_circles', secs: 30 }, { id: 'pull_apart', reps: 10, bw: true } ],
+  3: [ { id: 'march', secs: 60 }, { id: 'hinge_bw', reps: 8 }, { id: 'box_squat', reps: 8, bw: true }, { id: 'arm_circles', secs: 30 }, { id: 'pull_apart', reps: 12, bw: true } ],
+  4: [ { id: 'march', secs: 60 }, { id: 'hinge_bw', reps: 10 }, { id: 'box_squat', reps: 10, bw: true }, { id: 'arm_circles', secs: 30 }, { id: 'pull_apart', reps: 12, bw: true } ],
+  5: [ { id: 'march', secs: 60 }, { id: 'hinge_bw', reps: 10 }, { id: 'box_squat', reps: 10, bw: true }, { id: 'arm_circles', secs: 30 }, { id: 'pull_apart', reps: 15, bw: true } ]
+};
+
+/* Impact ladder, gated by bone status. Tier 1 heel drops, tier 2 hops, tier 3 drop landings. */
+function impactPlan(level, bone) {
+  const locked3 = 'Drop landings unlock when bone status is set to Normal in Settings (that needs a DEXA result).';
+  const locked2 = 'Hops stay off with a diagnosis of osteoporosis unless your clinician approves; heel drops carry the impact work.';
+  const hd = (sets, reps) => ({ items: [{ id: 'heel_drops', sets, reps }] });
+  const hops = (sets, reps) => ({ id: 'hops', sets, reps });
+  const drop = (sets, reps) => ({ id: 'drop_landing', sets, reps });
+  if (level === 1) return hd(1, 20);
+  if (level === 2) return hd(2, 15);
+  if (bone === 'osteoporosis') return Object.assign(hd(level === 3 ? 2 : 3, level === 3 ? 20 : 15), { note: locked2 });
+  if (level === 3) return { items: [hops(2, 10)] };
+  if (bone === 'normal') {
+    return level === 4 ? { items: [drop(3, 8)] } : { items: [drop(3, 10), hops(2, 10)] };
+  }
+  return level === 4 ? { items: [hops(3, 10)], note: locked3 } : { items: [hops(4, 12)], note: locked3 };
+}
+
+/* Resolve a workout for a level into concrete entries. */
+function buildWorkout(level, letter, bone, essentials) {
+  const L = LEVELS[level], W = WORKOUTS[level][letter];
+  let list = W.list.map(e => {
+    const ex = EXERCISES[e.id];
+    const main = !!e.main;
+    const sets = e.sets || (main ? L.mainSets : L.sets);
+    const reps = e.secs ? null : (e.reps || (main ? L.mainReps : L.reps));
+    return { id: e.id, ex, main, ess: !!e.ess, sets, reps, secs: e.secs || null, variant: e.variant || null,
+      rest: main ? L.mainRest : L.rest, sides: !!ex.sides };
+  });
+  if (essentials) list = list.filter(e => e.ess);
+  const imp = impactPlan(level, bone);
+  const finisher = imp.items.map(i => ({ id: i.id, ex: EXERCISES[i.id], sets: i.sets, reps: [i.reps, i.reps], secs: null, rest: 30, impact: true, sides: false }));
+  const b = W.balance;
+  finisher.push({ id: b.id, ex: EXERCISES[b.id], sets: b.sets, reps: b.reps || null, secs: b.secs || null, rest: 15, balance: true, variant: b.variant || null, sides: !!EXERCISES[b.id].sides });
+  const warm = WARMUPS[level].map(w => ({ id: w.id, ex: EXERCISES[w.id], secs: w.secs || null, reps: w.reps || null }));
+  return { level, letter, title: W.title, warm, list, finisher: essentials ? finisher.slice(0, 1) : finisher, note: imp.note || null, essentials: !!essentials };
+}
+
+function estimateMinutes(w) {
+  let s = 0;
+  w.warm.forEach(e => { s += e.secs ? e.secs + 6 : e.reps * 3 + 8; });
+  const work = (e) => { const per = e.secs ? e.secs + 8 : (e.reps[1] * 3 + 8); return per * (e.sides ? 2 : 1); };
+  const block = (e, wk) => e.sets * wk + Math.max(0, e.sets - 1) * e.rest + 20;
+  w.list.forEach(e => { s += block(e, work(e)); });
+  w.finisher.forEach(e => { s += block(e, e.impact ? e.reps[1] * 1.6 + 10 : work(e)); });
+  return Math.round(s / 60);
+}
+
+/* Bedrock app */
+const DEFAULT_NAME = 'Serenity';
+const KEY = 'serenity-strength-v1';
+const LB_PER_KG = 2.20462;
+
+function fresh() {
+  return { v: 1, name: DEFAULT_NAME, units: 'lb', step: 2.5, weight: null, bone: 'unknown', level: 1, levelStart: todayKey(),
+    schedule: { mode: 'rolling', days: [1, 3, 5] }, loads: {}, suggest: {}, sessions: [], active: null, snooze: null, onboarded: false, sound: true, seen: {} };
+}
+let S = load();
+function load() {
+  try { const raw = localStorage.getItem(KEY); if (raw) { const o = JSON.parse(raw); return Object.assign(fresh(), o); } } catch (e) { /* ignore */ }
+  return fresh();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save. Storage may be full or blocked.'); } }
+
+/* Utilities */
+const $ = (sel, root) => (root || document).querySelector(sel);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function todayKey(d) { d = d || new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function parseKey(k) { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); }
+function addDays(d, n) { const o = new Date(d); o.setDate(o.getDate() + n); return o; }
+function daysBetween(a, b) { return Math.round((parseKey(b) - parseKey(a)) / 864e5); }
+function weekStart(d) { const o = new Date(d); const wd = (o.getDay() + 6) % 7; o.setDate(o.getDate() - wd); o.setHours(0, 0, 0, 0); return o; }
+const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+function fmtDate(k) { const d = parseKey(k); return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }); }
+function toDisp(lb) { return S.units === 'kg' ? Math.round(lb / LB_PER_KG * 2) / 2 : Math.round(lb * 2) / 2; }
+function fmtW(lb, each) { if (!lb) return 'bodyweight'; return toDisp(lb) + ' ' + S.units + (each ? ' each' : ''); }
+function stepLb() { return S.units === 'kg' ? LB_PER_KG : S.step; }
+function roundLb(lb) { const st = stepLb(); return Math.max(0, Math.round(lb / st) * st); }
+function incFor(ex) { const base = ex.inc || 5; return S.units === 'kg' ? (base >= 5 ? 2 : 1) * LB_PER_KG : base; }
+function greeting() { const h = new Date().getHours(); return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening'; }
+let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 2200); }
+const REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* Figures */
+let figs = [];
+function mountFigs(root) {
+  (root || document).querySelectorAll('.figbox[data-ex]').forEach(box => {
+    if (box.dataset.mounted) return; box.dataset.mounted = '1';
+    const ex = EXERCISES[box.dataset.ex]; if (!ex) return;
+    const f = FIG.create(box, { reduced: REDUCED && box.dataset.force !== '1' }).set(ex);
+    const auto = box.dataset.play === '1';
+    if (auto) f.play();
+    figs.push({ f, box, auto });
+  });
+}
+function unmountFigs(root) {
+  figs = figs.filter(e => { if (!root || root.contains(e.box)) { e.f.destroy(); return false; } return true; });
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { figs.forEach(e => e.f.stop()); return; }
+  figs.forEach(e => { if (e.auto) e.f.play(); });
+  if (S.active && !$('#session').hidden) renderSession();
+});
+
+/* Program helpers */
+const ORDER = ['A', 'B', 'C'];
+function lastSession() { return S.sessions.length ? S.sessions[S.sessions.length - 1] : null; }
+function nextLetter() { const l = lastSession(); return l ? ORDER[(ORDER.indexOf(l.letter) + 1) % 3] : 'A'; }
+function sessionsOn(key) { return S.sessions.filter(s => s.day === key); }
+function workoutFor(letter, essentials) { return buildWorkout(S.level, letter, S.bone, essentials); }
+function rxText(e) {
+  if (e.secs) return e.sets + ' \u00d7 ' + e.secs + ' s' + (e.sides ? ' each side' : '');
+  const r = e.reps[0] === e.reps[1] ? e.reps[0] : e.reps[0] + '-' + e.reps[1];
+  return e.sets + ' \u00d7 ' + r + (e.sides ? ' each side' : '');
+}
+function targetText(e) {
+  let t;
+  if (e.secs) t = e.secs + ' seconds' + (e.sides ? ' each side' : '');
+  else t = (e.reps[0] === e.reps[1] ? e.reps[0] : e.reps[0] + ' to ' + e.reps[1]) + ' reps' + (e.sides ? ' each side' : '');
+  return t;
+}
+function loadFor(id) { const ex = EXERCISES[id]; if (ex.load !== 'db1' && ex.load !== 'db2') return null; if (S.loads[id] != null) return S.loads[id]; return ex.start || 0; }
+function lastReps(id) { for (let i = S.sessions.length - 1; i >= 0; i--) { const st = S.sessions[i].sets.filter(x => x.id === id); if (st.length) return st[st.length - 1]; } return null; }
+
+/* Tabs and rendering */
+let tab = 'today';
+const TABS = [
+  ['today', 'Today', '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.4" fill="currentColor"/>'],
+  ['plan', 'Plan', '<rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10.5h17M8 3v4M16 3v4"/>'],
+  ['learn', 'Learn', '<path d="M4 5.5c3-1.2 5.5-1.1 8 .6 2.5-1.7 5-1.8 8-.6v13c-3-1.2-5.5-1.1-8 .6-2.5-1.7-5-1.8-8-.6z"/><path d="M12 6.1v13"/>'],
+  ['progress', 'Progress', '<path d="M5 19v-6M11 19V7M17 19v-9"/><path d="M3 19.5h18"/>'],
+  ['settings', 'Settings', '<path d="M4 7.5h16M4 16.5h16"/><circle cx="9" cy="7.5" r="2.6" fill="var(--bg)"/><circle cx="15" cy="16.5" r="2.6" fill="var(--bg)"/>']
+];
+function renderTabs() {
+  $('#tabs .tabs-in').innerHTML = TABS.map(t => `<button data-tab="${t[0]}" ${tab === t[0] ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" aria-hidden="true">${t[2]}</svg>${t[1]}</button>`).join('');
+}
+function render() {
+  unmountFigs($('#screen'));
+  renderTabs();
+  const s = $('#screen');
+  s.innerHTML = ({ today: viewToday, plan: viewPlan, learn: viewLearn, progress: viewProgress, settings: viewSettings })[tab]();
+  mountFigs(s);
+  window.scrollTo(0, 0);
+}
+
+/* Today */
+function weekStrip(planned) {
+  const start = weekStart(new Date()); const tk = todayKey();
+  let cells = '';
+  let nxt = nextLetter();
+  for (let i = 0; i < 7; i++) {
+    const d = addDays(start, i), k = todayKey(d), done = sessionsOn(k);
+    let cls = 'dot', txt = '';
+    if (done.length) { cls += ' done'; txt = done.map(x => x.letter).join(''); }
+    else if (k >= tk && S.schedule.mode === 'pinned' && S.schedule.days.includes(i)) { cls += ' plan'; txt = nxt; nxt = ORDER[(ORDER.indexOf(nxt) + 1) % 3]; }
+    cells += `<div class="day ${k === tk ? 'today' : ''}"><span>${DOW[i]}</span><div class="${cls}">${txt}</div></div>`;
+  }
+  return `<div class="week" aria-label="This week">${cells}</div>`;
+}
+function viewToday() {
+  const letter = nextLetter();
+  const w = workoutFor(letter, false), we = workoutFor(letter, true);
+  const mins = estimateMinutes(w), minsE = estimateMinutes(we);
+  const heroEx = w.list.find(e => e.main) || w.list[0];
+  const tk = todayKey(); const doneToday = sessionsOn(tk);
+  let html = `<h1>${greeting()}, ${esc(S.name)}.</h1><p class="muted" style="margin-top:4px">Level ${S.level}. ${S.sessions.length ? countThisWeek() + ' of 3 sessions this week.' : 'Three sessions a week is the aim.'}</p>`;
+  html += weekStrip();
+  if (S.active) {
+    const a = S.active;
+    html += `<div class="card tint" style="margin-bottom:14px"><h3>Workout ${a.letter} is in progress</h3><p style="margin:6px 0 12px">Started ${Math.max(1, Math.round((Date.now() - a.started) / 60000))} min ago. Pick up where you left off, or discard it.</p><div class="row"><button class="btn primary" data-act="resume">Resume</button><button class="btn outline" data-act="discard">Discard</button></div></div>`;
+  }
+  const ready = levelReady();
+  if (ready) {
+    html += `<div class="card tint" style="margin-bottom:14px"><h3>Ready for Level ${S.level + 1}?</h3><p style="margin:6px 0 12px">You have finished ${fullAtLevel().length} full sessions at Level ${S.level} and most sets felt easy or just right. Level ${S.level + 1} is about ${LEVELS[S.level + 1].minutes} minutes: ${esc(LEVELS[S.level + 1].about)}</p><div class="row"><button class="btn primary" data-act="levelup">Move up</button><button class="btn outline" data-act="snooze">Not yet</button></div></div>`;
+  }
+  html += `<div class="hero">
+    <div class="kicker">${doneToday.length ? 'Next workout' : 'Today'}</div>
+    <h2>Workout ${letter}: ${esc(w.title)}</h2>
+    <div class="meta num">Level ${S.level}, about ${mins} minutes</div>
+    <div class="figbox" data-ex="${heroEx.id}" data-play="1"></div>
+    <ul class="list">${w.list.map(e => `<li><span>${esc(e.ex.name)}</span><span class="rx num">${rxText(e)}</span></li>`).join('')}
+      <li><span>${w.finisher.map(f => esc(f.ex.name)).join(', ')}</span><span class="rx">finish</span></li></ul>
+    <button class="btn primary" data-act="start" data-letter="${letter}">Start workout ${letter}</button>
+    <div class="center" style="margin-top:6px"><button class="btn quiet" data-act="start" data-letter="${letter}" data-ess="1">Low on energy? Do the essentials (about ${minsE} min)</button></div>
+    ${doneToday.length ? '<div class="note">You already trained today. Rest days are when bone rebuilds; tomorrow or the day after is ideal.</div>' : ''}
+    ${w.note ? `<div class="note">${esc(w.note)}</div>` : ''}
+  </div>`;
+  if (!S.sessions.length) {
+    html += `<div class="section"><h3>Before the first session</h3><div class="card"><ul class="plain">
+      <li>Pick starting weights you could lift about 15 times. The app will move you up; starting light costs nothing.</li>
+      <li>Each set ends with one tap on how it felt. Easy means three or more reps were left; Just right means one or two; Hard means none. That tap drives the weight suggestions.</li>
+      <li>Tap How to on any exercise for the cues and the common mistakes. The figure shows the pace.</li>
+      <li>Nothing here should hurt. Sharp pain, or pain in a joint, means stop that exercise and skip it.</li></ul>
+      <button class="btn outline block" data-act="tab" data-tab="learn">Read the equipment list and the science</button></div></div>`;
+  } else {
+    const l = lastSession();
+    html += `<div class="section"><h3>Last time</h3><div class="card"><div class="muted small">${fmtDate(l.day)}, Workout ${l.letter}${l.essentials ? ' (essentials)' : ''}, ${l.minutes} min</div>${summaryRows(l)}</div></div>`;
+  }
+  return html;
+}
+function countThisWeek() { const ws = todayKey(weekStart(new Date())); return S.sessions.filter(s => s.day >= ws).length; }
+function summaryRows(sess) {
+  const byEx = {}; sess.sets.forEach(x => (byEx[x.id] = byEx[x.id] || []).push(x));
+  return '<ul class="rows">' + Object.keys(byEx).map(id => {
+    const ex = EXERCISES[id], sets = byEx[id];
+    const w = sets[0].w ? fmtW(Math.max(...sets.map(x => x.w || 0)), ex.load === 'db2') : '';
+    const detail = sets.map(x => x.secs != null ? x.secs + 's' : x.reps).join(', ');
+    return `<li><div class="grow"><div class="t">${esc(ex.name)}</div><div class="s num">${detail}${w ? ' at ' + w : ''}</div></div><div class="v">${effortMark(sets)}</div></li>`;
+  }).join('') + '</ul>';
+}
+function effortMark(sets) { const h = sets.filter(x => x.effort === 'hard').length, e = sets.filter(x => x.effort === 'easy').length; return h >= 2 ? 'hard' : e === sets.length && sets.length ? 'easy' : ''; }
+
+/* Level rules */
+function fullAtLevel() { return S.sessions.filter(s => s.level === S.level && !s.essentials && s.day >= S.levelStart); }
+function levelReady() {
+  if (S.level >= 5 || S.active) return false;
+  const full = fullAtLevel(); if (full.length < 6) return false;
+  if (daysBetween(S.levelStart, todayKey()) < 14) return false;
+  if (S.snooze && S.snooze.level === S.level && full.length < S.snooze.until) return false;
+  const sets = full.slice(-6).flatMap(s => s.sets).filter(x => x.effort);
+  const hard = sets.filter(x => x.effort === 'hard').length;
+  return sets.length === 0 || hard / sets.length <= 0.2;
+}
+function setLevel(n) { S.level = n; S.levelStart = todayKey(); S.snooze = null; save(); }
+
+/* Plan */
+function viewPlan() {
+  const m = S.schedule.mode;
+  let html = `<h2 class="screen-title">Plan</h2>`;
+  html += `<div class="card"><h3>Training days</h3><p class="muted small" style="margin:4px 0 12px">The workouts always run A, B, C, A, B, C. Rolling means the next one is simply next; pinned days put them on your calendar.</p>
+    <div class="seg" role="group" aria-label="Schedule"><button data-act="mode" data-mode="rolling" aria-pressed="${m === 'rolling'}">Rolling</button><button data-act="mode" data-mode="pinned" aria-pressed="${m === 'pinned'}">Pinned days</button></div>
+    ${m === 'pinned' ? `<div class="chips" style="margin-top:12px">${DOW.map((d, i) => `<button class="chip day" data-act="day" data-day="${i}" aria-pressed="${S.schedule.days.includes(i)}">${d.slice(0, 2)}</button>`).join('')}</div><p class="muted small" style="margin:10px 0 0">Three days with a rest day between is ideal; two also works.</p>` : ''}</div>`;
+  html += `<div class="section"><h3>Level</h3><div class="levels">${[1, 2, 3, 4, 5].map(n => `<button data-act="level" data-level="${n}" aria-pressed="${S.level === n}"><b>${n}</b><span>${LEVELS[n].minutes} min</span></button>`).join('')}</div>
+    <div class="card"><p style="margin:0 0 8px"><b>Level ${S.level}.</b> ${esc(LEVELS[S.level].about)}</p><p class="muted small" style="margin:0">The app suggests the next level after six full sessions at this one, at least two weeks apart, when most sets felt easy or just right. You choose when to move. You can also move down any time; nothing is lost.</p></div></div>`;
+  const wk = ORDER.map(L => workoutFor(L, false));
+  html += `<div class="section"><h3>The three workouts</h3>` + wk.map(w => `<div class="card"><h3>Workout ${w.letter}: ${esc(w.title)}</h3><div class="muted small num" style="margin:2px 0 8px">About ${estimateMinutes(w)} minutes</div><ul class="rows">${w.list.map(e => `<li><div class="grow"><div class="t">${esc(e.ex.name)}${e.ess ? '' : ' <span class="pill">skipped in essentials</span>'}</div>${e.variant ? `<div class="s">${esc(e.variant)}</div>` : ''}</div><div class="v">${rxText(e)}</div></li>`).join('')}${w.finisher.map(e => `<li><div class="grow"><div class="t">${esc(e.ex.name)}</div>${e.variant ? `<div class="s">${esc(e.variant)}</div>` : ''}</div><div class="v">${rxText(e)}</div></li>`).join('')}</ul>${w.note ? `<p class="muted small" style="margin:10px 0 0">${esc(w.note)}</p>` : ''}</div>`).join('') + `</div>`;
+  return html;
+}
+
+/* Learn */
+const PATTERN_ORDER = ['Squat', 'Squat, single leg', 'Hinge', 'Hinge, single leg', 'Push', 'Push, overhead', 'Power, overhead', 'Power, hinge', 'Pull', 'Pull, shoulder health', 'Carry', 'Carry, one side', 'Hip extension', 'Hip abduction', 'Impact, gentle', 'Impact, moderate', 'Impact, higher', 'Balance', 'Trunk, neutral spine', 'Trunk, anti-rotation', 'Warm-up'];
+function proteinLine() {
+  if (!S.weight) return 'Add your body weight in Settings and this card will show your numbers.';
+  const kg = S.units === 'kg' ? S.weight : S.weight / LB_PER_KG;
+  return `At your weight that is about ${Math.round(kg * 1.2)} to ${Math.round(kg * 1.6)} g of protein a day, or roughly 25 to 30 g at each of three or four meals.`;
+}
+const CARDS = [
+  { id: 'why', title: 'Why heavy, and why impact', body: `<p>Bone is living tissue that adapts to the loads it meets. After menopause the rate of bone loss speeds up for several years, most steeply around the final period, which is why the timing of a program like this matters.</p><p>Two kinds of loading have the best evidence. Progressive resistance training with heavy weights sends compressive force through the hip and spine; in the LIFTMOR trial, eight months of twice-weekly 30-minute sessions of deadlifts, squats and overhead presses at 80 to 85 percent of maximum raised spine density by about 3 percent in postmenopausal women with low bone mass, with no serious injuries. Brief impact, such as heel drops, hops and drop landings, gives the jolt that steady exercise like walking or swimming does not. The Australian position statement recommends both, plus balance training, and advises against loaded spinal flexion (sit-ups with weight, toe-touch stretches under load).</p><p>The five levels here start light and build toward the LIFTMOR scheme of five sets of five on the main lift, with the impact ladder gated by your bone status.</p>`, refs: ['liftmor', 'essa', 'swan'] },
+  { id: 'effort', title: 'How the effort scale works', body: `<p>After each set you tap one of three words.</p><ul class="plain"><li><b>Easy.</b> You could have done three or more extra reps.</li><li><b>Just right.</b> One or two reps were left. This is where most sets should land.</li><li><b>Hard.</b> Nothing left, or your form slipped on the last rep.</li></ul><p>When every set of an exercise hits the top of its rep range without a Hard, the app suggests more weight next time: 5 lb per dumbbell on lower-body lifts, 2.5 lb on upper-body lifts. If reps fall short or two sets are Hard, it suggests a little less. You always decide; the suggestion is the default in the weight box, and you can change it.</p><p>The rep ranges are wide on purpose. Position statements for older adults recommend beginning with lighter loads and 8 to 15 reps, then progressing over months toward heavier loads and 5 to 8 reps, which is what the levels do.</p>`, refs: ['nsca', 'acsm'] },
+  { id: 'bone', title: 'Bone status and the impact ladder', body: `<p>The impact work climbs a ladder: heel drops, then two-foot hops, then drop landings from a low step. Where you can climb depends on the bone status set in Settings.</p><ul class="plain"><li><b>Unknown</b> (the default with no DEXA scan): heel drops from Level 1, hops from Level 3. Drop landings stay locked.</li><li><b>Normal</b> (DEXA T-score above minus 1): the full ladder; drop landings from Level 4.</li><li><b>Osteopenia</b>: same as unknown. The LIFTMOR participants had osteopenia or osteoporosis and did drop landings safely, but under supervision.</li><li><b>Osteoporosis</b>: heel drops only, and a word with your clinician before hops.</li></ul><p>A home bioimpedance scale cannot measure bone density; its bone-mass number is an estimate derived from lean mass. Only a DEXA scan gives a diagnosis, and it also gives a baseline, so that a scan a year or two later can show what the training did. Ask your doctor whether a baseline scan makes sense for you. Low body weight is itself a fracture risk factor, and some medications and conditions affect bone, so it is worth telling your doctor that you are training for bone density.</p>`, refs: ['essa', 'liftmor', 'delaet'] },
+  { id: 'fuel', title: 'Protein, calcium, vitamin D', body: `<p>Muscle and bone are built from what you eat. Expert groups recommend 1.2 to 1.6 g of protein per kilogram of body weight per day for adults who strength train, spread over the day rather than in one meal.</p><p class="proteinline">${proteinLine()}</p><p>For women over 50 the recommended calcium intake is 1,200 mg a day, food first (dairy, fortified plant milks, canned fish with bones, leafy greens, tofu set with calcium), and vitamin D 600 IU a day from 51 to 70 (800 IU after 70), which is hard to get from food; a blood test tells you whether a supplement is needed.</p>`, refs: ['protage', 'morton', 'paddon', 'nih'] },
+  { id: 'kit', title: 'Equipment', body: `<ul class="plain"><li><b>Adjustable dumbbells</b>, a pair that goes to at least 50 lb each. This is the one non-negotiable item: by Level 4 the deadlift and squat need real weight. Fixed dumbbells in 5 lb steps from 5 to 25 lb also work at the lower levels.</li><li><b>Loop resistance bands</b>, a set from light to heavy, for rows, pull-aparts, lateral walks and the Pallof press.</li><li><b>A flat bench</b> for the bench press, hip thrust, one-arm row and rear-foot-elevated split squat.</li><li><b>A sturdy step</b> 6 to 8 inches high (a bottom stair works) for step-ups and, later, drop landings.</li><li><b>A mat</b> for the floor work.</li><li>Later: <b>a weighted vest</b> at 5 to 10 percent of body weight for step-ups and carries. In one five-year trial, vest-and-jumping exercise maintained hip bone density in postmenopausal women while the control group lost bone.</li></ul>`, refs: ['snow', 'essa'] },
+  { id: 'levels', title: 'How the levels and Essentials work', body: `<p>Every level has the same three workouts. A is the squat day, B the hinge day, C the overhead and carry day. Each level adds movements, sets and time: about 10, 20, 30, 45 and 60 minutes.</p><p>The app suggests moving up after six full sessions at a level spread over at least two weeks, when most sets felt easy or just right. You decide. You can also move down any time in Plan.</p><p>Essentials is the short version of the day's workout: the main lift plus one or two others. Use it on low-energy days; it keeps the rotation moving and counts as a session, though not toward the level-up count. Consistency over months is what builds bone, not any single heroic workout.</p>`, refs: ['nsca', 'essa'] }
+];
+function viewLearn() {
+  let html = `<h2 class="screen-title">Learn</h2><div class="card" style="padding:6px 18px"><ul class="rows">${CARDS.map(c => `<li><button class="rowbtn" data-act="card" data-card="${c.id}"><div class="grow"><div class="t">${esc(c.title)}</div></div><span class="chev" aria-hidden="true">\u203a</span></button></li>`).join('')}</ul></div>`;
+  html += `<div class="section"><h3>Exercise library</h3><p class="muted small">Tap any movement for the animation, cues, common mistakes, and the evidence behind it.</p>`;
+  const groups = {};
+  Object.keys(EXERCISES).forEach(id => { const p = EXERCISES[id].pattern; (groups[p] = groups[p] || []).push(id); });
+  PATTERN_ORDER.filter(p => groups[p]).forEach(p => {
+    html += `<div class="card" style="padding:6px 18px"><div class="muted small" style="padding:10px 0 2px">${esc(p)}</div><ul class="rows">${groups[p].map(id => `<li><button class="rowbtn" data-act="ex" data-ex="${id}"><div class="thumb figbox" data-ex="${id}"></div><div class="grow"><div class="t">${esc(EXERCISES[id].name)}</div><div class="s">${esc(EXERCISES[id].equipment)}</div></div><span class="chev" aria-hidden="true">\u203a</span></button></li>`).join('')}</ul></div>`;
+  });
+  html += `</div><div class="section"><h3>Sources</h3><div class="card"><ol class="refs small muted" style="padding-left:18px;margin:0">${Object.keys(REFS).map(k => `<li id="ref-${k}">${esc(REFS[k])}</li>`).join('')}</ol></div></div>`;
+  return html;
+}
+function exerciseSheet(id) {
+  const ex = EXERCISES[id];
+  const html = `<h2>${esc(ex.name)}</h2><div class="muted small">${esc(ex.pattern)}. ${esc(ex.equipment)}.</div>
+    <div class="figbox" data-ex="${id}" data-play="1" data-force="1"></div>
+    ${ex.cues.length ? `<h3>How to</h3><ol style="padding-left:20px;margin:6px 0 12px">${ex.cues.map(c => `<li style="margin-bottom:8px">${esc(c)}</li>`).join('')}</ol>` : ''}
+    ${ex.faults.length ? `<h3>Watch for</h3><ul class="plain">${ex.faults.map(c => `<li>${esc(c)}</li>`).join('')}</ul>` : ''}
+    <h3>Why it is here <span class="pill ${ex.evidence}">${EV[ex.evidence]}</span></h3><p style="margin-top:8px">${esc(ex.why)}</p>
+    <ul class="refs" style="padding-left:18px">${ex.refs.map(r => `<li>${esc(REFS[r])}</li>`).join('')}</ul>
+    <button class="btn outline block close" data-act="closesheet">Close</button>`;
+  openSheet(html);
+}
+function cardSheet(cid) {
+  const c = CARDS.find(x => x.id === cid); if (!c) return;
+  const body = c.id === 'fuel' ? c.body.replace(/<p class="proteinline">.*?<\/p>/, `<p class="proteinline">${proteinLine()}</p>`) : c.body;
+  openSheet(`<h2>${esc(c.title)}</h2><div style="margin-top:10px">${body}</div><ul class="refs" style="padding-left:18px">${c.refs.map(r => `<li>${esc(REFS[r])}</li>`).join('')}</ul><button class="btn outline block close" data-act="closesheet">Close</button>`);
+}
+function openSheet(html) { const sh = $('#sheet'); unmountFigs(sh); $('.sheet-card', sh).innerHTML = '<div class="grab"></div>' + html; sh.hidden = false; mountFigs(sh); $('.sheet-card', sh).scrollTop = 0; document.body.style.overflow = 'hidden'; }
+function closeSheet() { const sh = $('#sheet'); unmountFigs(sh); sh.hidden = true; $('.sheet-card', sh).innerHTML = ''; document.body.style.overflow = ''; }
+
+/* Progress */
+function viewProgress() {
+  let html = `<h2 class="screen-title">Progress</h2>`;
+  const n = S.sessions.length;
+  if (!n) return html + `<div class="card"><p style="margin:0">Your first session will appear here, with the weights you lifted and how the loads climb over time.</p></div>`;
+  const first = S.sessions[0].day; const weeks = Math.max(1, Math.ceil((daysBetween(first, todayKey()) + 1) / 7));
+  html += `<div class="stats"><div class="stat"><div class="v num">${n}</div><div class="l">sessions</div></div><div class="stat"><div class="v num">${(n / weeks).toFixed(1)}</div><div class="l">per week</div></div><div class="stat"><div class="v num">${Math.round(S.sessions.reduce((a, s) => a + (s.minutes || 0), 0) / 60 * 10) / 10}</div><div class="l">hours</div></div></div>`;
+  // weekly bars, last 8 weeks
+  const ws = weekStart(new Date()); let bars = '', labels = '';
+  for (let i = 7; i >= 0; i--) { const a = todayKey(addDays(ws, -7 * i)), b = todayKey(addDays(ws, -7 * i + 6)); const c = S.sessions.filter(s => s.day >= a && s.day <= b).length; bars += `<div class="${c >= 2 ? 'on' : ''}" style="height:${Math.max(4, c * 20)}px" title="${c}"></div>`; labels += `<span>${i === 0 ? 'now' : '-' + i + 'w'}</span>`; }
+  html += `<div class="card"><div class="muted small">Sessions per week, last eight weeks</div><div class="bars">${bars}</div><div class="bars-l">${labels}</div></div>`;
+  // load charts
+  const byEx = {};
+  S.sessions.forEach((s, si) => s.sets.forEach(x => { if (x.w) { const e = (byEx[x.id] = byEx[x.id] || {}); e[si] = Math.max(e[si] || 0, x.w); } }));
+  const ids = Object.keys(byEx).sort((a, b) => Object.keys(byEx[b]).length - Object.keys(byEx[a]).length);
+  if (ids.length) {
+    html += `<div class="section"><h3>Loads</h3>` + ids.map(id => {
+      const pts = Object.keys(byEx[id]).map(Number).sort((a, b) => a - b).map(si => ({ x: si, y: byEx[id][si] }));
+      const last = pts[pts.length - 1].y, firstY = pts[0].y;
+      return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:baseline"><div><div>${esc(EXERCISES[id].name)}</div><div class="muted small num">${pts.length} session${pts.length > 1 ? 's' : ''}${last > firstY ? ', up from ' + fmtW(firstY) : ''}</div></div><div class="num" style="font-family:var(--serif);font-size:26px">${fmtW(last, EXERCISES[id].load === 'db2')}</div></div>${lineChart(pts)}</div>`;
+    }).join('') + `</div>`;
+  }
+  html += `<div class="section"><h3>Sessions</h3><div class="card" style="padding:6px 18px"><ul class="rows">${S.sessions.slice().reverse().slice(0, 30).map(s => `<li><div class="grow"><div class="t">Workout ${s.letter}${s.essentials ? ' (essentials)' : ''}</div><div class="s">${fmtDate(s.day)}, Level ${s.level}, ${s.minutes} min</div></div><div class="v">${s.sets.length} sets</div></li>`).join('')}</ul></div></div>`;
+  return html;
+}
+function lineChart(pts) {
+  if (pts.length < 2) return '';
+  const W = 300, H = 72, px = 10, py = 10;
+  const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+  const X = x => px + (x1 === x0 ? (W - 2 * px) / 2 : (x - x0) / (x1 - x0) * (W - 2 * px));
+  const Y = y => H - py - (y1 === y0 ? (H - 2 * py) / 2 : (y - y0) / (y1 - y0) * (H - 2 * py));
+  return `<svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><line class="ax" x1="0" y1="${H - 1}" x2="${W}" y2="${H - 1}"/><polyline class="ln" points="${pts.map(p => X(p.x).toFixed(1) + ',' + Y(p.y).toFixed(1)).join(' ')}"/>${pts.map(p => `<circle class="pt" cx="${X(p.x).toFixed(1)}" cy="${Y(p.y).toFixed(1)}" r="3"/>`).join('')}</svg>`;
+}
+
+/* Settings */
+function viewSettings() {
+  const wt = S.weight == null ? '' : S.weight;
+  return `<h2 class="screen-title">Settings</h2>
+  <div class="card">
+    <div class="field"><label for="f-name">Name for the greeting</label><input id="f-name" type="text" value="${esc(S.name)}" data-set="name" autocomplete="off"></div>
+    <div class="field"><label>Units</label><div class="seg"><button data-act="units" data-units="lb" aria-pressed="${S.units === 'lb'}">Pounds</button><button data-act="units" data-units="kg" aria-pressed="${S.units === 'kg'}">Kilograms</button></div></div>
+    ${S.units === 'lb' ? `<div class="field"><label>Smallest dumbbell step</label><div class="seg"><button data-act="step" data-step="2.5" aria-pressed="${S.step === 2.5}">2.5 lb</button><button data-act="step" data-step="5" aria-pressed="${S.step === 5}">5 lb</button></div></div>` : ''}
+    <div class="field"><label for="f-weight">Body weight (${S.units}), for the protein card</label><input id="f-weight" type="number" inputmode="decimal" value="${wt}" data-set="weight" placeholder="optional"></div>
+  </div>
+  <div class="section"><h3>Bone status</h3><div class="card"><p class="muted small" style="margin:0 0 10px">Sets how far the impact ladder goes. Only a DEXA scan can change Unknown to one of the others.</p>
+    <div class="stack">${[['unknown', 'Unknown, no DEXA yet'], ['normal', 'Normal (T-score above \u22121)'], ['osteopenia', 'Osteopenia (T-score \u22121 to \u22122.5)'], ['osteoporosis', 'Osteoporosis (T-score \u22122.5 or below)']].map(o => `<button class="chip" style="height:46px;justify-content:flex-start;border-radius:12px" data-act="bone" data-bone="${o[0]}" aria-pressed="${S.bone === o[0]}">${o[1]}</button>`).join('')}</div></div></div>
+  <div class="section"><h3>During workouts</h3><div class="card"><div class="kv"><span class="k">Rest timer sound</span><button class="chip sm" data-act="sound" aria-pressed="${S.sound}">${S.sound ? 'On' : 'Off'}</button></div><div class="kv"><span class="k">Keep the screen awake</span><span class="v muted small">${'wakeLock' in navigator ? 'Yes, while a workout is open' : 'Not supported on this browser'}</span></div></div></div>
+  <div class="section"><h3>Your data</h3><div class="card"><p class="muted small" style="margin:0 0 12px">Everything lives on this device, in this browser. Export a backup now and then; import it on a new phone.</p><div class="row"><button class="btn outline" data-act="export">Export backup</button><button class="btn outline" data-act="import">Import</button></div><input type="file" id="importfile" accept="application/json,.json" hidden><hr class="hr"><button class="btn danger block" data-act="reset">Erase everything</button></div></div>
+  <div class="section muted small center">Serenity Strength. Built for one person; not medical advice. Check with your doctor before starting, especially with a diagnosis of osteoporosis or a recent fracture.</div>`;
+}
+function exportData() {
+  const blob = new Blob([JSON.stringify(S, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'serenity-strength-backup-' + todayKey() + '.json'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  toast('Backup file created');
+}
+function importData(file) {
+  const r = new FileReader();
+  r.onload = () => { try { const o = JSON.parse(r.result); if (!o || o.v !== 1 || !Array.isArray(o.sessions)) throw new Error('bad'); if (!confirm(`Replace the data on this device with this backup (${o.sessions.length} sessions)?`)) return; S = Object.assign(fresh(), o); save(); render(); toast('Backup imported'); } catch (e) { toast('That file is not a Serenity Strength backup.'); } };
+  r.readAsText(file);
+}
+
+/* Session player */
+function startSession(letter, essentials) {
+  const w = workoutFor(letter, essentials);
+  const steps = [];
+  w.warm.forEach(e => steps.push({ kind: 'warm', id: e.id, secs: e.secs, reps: e.reps, sets: 1 }));
+  w.list.forEach(e => steps.push({ kind: 'work', id: e.id, sets: e.sets, reps: e.reps, secs: e.secs, rest: e.rest, main: e.main, variant: e.variant, sides: e.sides }));
+  w.finisher.forEach(e => steps.push({ kind: e.impact ? 'impact' : 'balance', id: e.id, sets: e.sets, reps: e.reps, secs: e.secs, rest: e.rest, variant: e.variant, sides: e.sides }));
+  S.active = { letter, level: S.level, essentials: !!essentials, title: w.title, started: Date.now(), i: 0, set: 1, steps, log: [], timer: null, restUntil: null, restNext: '', effort: null, w: null, reps: null, done: false };
+  save();
+  openSession();
+}
+function openSession() { $('#session').hidden = false; document.body.style.overflow = 'hidden'; requestWake(); renderSession(); }
+function closeSession() { $('#session').hidden = true; $('#session').innerHTML = ''; $('#rest').hidden = true; document.body.style.overflow = ''; releaseWake(); stopTick(); render(); }
+let wake = null;
+async function requestWake() { try { if ('wakeLock' in navigator) wake = await navigator.wakeLock.request('screen'); } catch (e) { wake = null; } }
+function releaseWake() { try { if (wake) wake.release(); } catch (e) { } wake = null; }
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S.active && !$('#session').hidden) requestWake(); });
+
+function curStep() { const a = S.active; return a ? a.steps[a.i] : null; }
+function renderSession() {
+  const a = S.active; if (!a) return;
+  const root = $('#session');
+  unmountFigs(root);
+  if (a.done) { root.innerHTML = summaryView(); return; }
+  const st = curStep(); const ex = EXERCISES[st.id];
+  const total = a.steps.length;
+  const top = `<div class="s-top"><div class="prog num">Workout ${a.letter}${a.essentials ? ', essentials' : ''}, ${a.i + 1} of ${total}</div><button class="x" data-act="pause" aria-label="Pause and close">\u2715</button></div>`;
+  let body = '';
+  const howto = `<details class="howto" ${a.seenHow && a.seenHow[st.id] ? '' : 'open'}><summary>How to</summary><ol>${ex.cues.map(c => `<li>${esc(c)}</li>`).join('')}</ol>${ex.faults.length ? `<div class="faults"><b>Watch for:</b> ${ex.faults.map(esc).join(' ')}</div>` : ''}</details>`;
+  if (st.kind === 'warm') {
+    body += `<div class="s-stage">Warm-up</div><h2 class="s-name">${esc(ex.name)}</h2><div class="s-target">${st.secs ? st.secs + ' seconds' : st.reps + ' reps, no weight'}</div>
+      <div class="figbox s-figure" data-ex="${st.id}" data-play="1" data-force="1"></div>
+      <p class="muted" style="margin:0 0 14px">${esc(ex.cues[0])}</p>` + (st.secs ? timerBlock(st.secs) : `<button class="btn primary block" data-act="next">Done</button>`);
+  } else {
+    const isWork = st.kind === 'work';
+    const loaded = isWork && (ex.load === 'db1' || ex.load === 'db2');
+    if (a.w == null && loaded) { const sug = S.suggest[st.id]; a.w = sug && sug.to != null ? sug.to : loadFor(st.id); }
+    if (a.reps == null) { const lr = lastReps(st.id); a.reps = st.secs ? st.secs : (lr && lr.reps ? Math.min(Math.max(lr.reps, st.reps[0]), st.reps[1]) : st.reps[1]); }
+    const stage = st.kind === 'impact' ? 'Impact' : st.kind === 'balance' ? 'Balance' : (st.main ? 'Main lift' : 'Strength');
+    body += `<div class="s-stage">${stage}</div><h2 class="s-name">${esc(ex.name)}</h2><div class="s-target">${targetText(st)}${st.variant ? '. ' + esc(st.variant) : ''}</div>
+      <div class="figbox s-figure" data-ex="${st.id}" data-play="1" data-force="1"></div>
+      <div class="s-set"><span class="n">Set ${a.set} of ${st.sets}</span><span class="r num">${st.rest >= 30 ? 'then rest ' + st.rest + ' s' : ''}</span></div>`;
+    const sug = S.suggest[st.id];
+    if (sug && a.set === 1) body += `<div class="suggest ${sug.type}">${esc(sug.text)}</div>`;
+    if (st.kind === 'impact') {
+      body += `<p class="muted" style="margin:0 0 14px">${esc(ex.cues[1] || ex.cues[0])}</p><button class="btn primary block" data-act="logset" data-reps="${st.reps[1]}">Done, ${st.reps[1]} ${st.id === 'heel_drops' ? 'drops' : st.id === 'hops' ? 'hops' : 'landings'}</button>`;
+    } else {
+      body += `<div class="inputs ${loaded ? '' : 'one'}">`;
+      if (loaded) body += stepperHtml('w', toDisp(a.w), S.units, a.w ? (ex.load === 'db2' ? 'Weight, each hand' : 'Weight') : 'Weight (0 means no dumbbells)');
+      body += st.secs ? stepperHtml('reps', a.reps, 's', st.sides ? 'Seconds each side' : 'Seconds') : stepperHtml('reps', a.reps, '', st.sides ? 'Reps each side' : 'Reps');
+      body += `</div>`;
+      if (st.secs) body += timerBlock(a.reps, true);
+      if (isWork) body += `<div class="effort"><div class="chips">${[['easy', 'Easy'], ['right', 'Just right'], ['hard', 'Hard']].map(o => `<button class="chip" data-act="effort" data-effort="${o[0]}" aria-pressed="${a.effort === o[0]}">${o[1]}</button>`).join('')}</div><div class="cap">${a.effort === 'easy' ? 'Three or more reps were left.' : a.effort === 'right' ? 'One or two reps were left.' : a.effort === 'hard' ? 'Nothing left, or form slipped.' : 'How did that set feel?'}</div></div>`;
+      body += `<button class="btn primary block" data-act="logset" ${isWork && !a.effort ? 'disabled' : ''}>${a.set < st.sets ? 'Log set ' + a.set : 'Log set ' + a.set + ' and continue'}</button><div class="center" style="margin-top:6px"><button class="btn quiet" data-act="skipex">Skip this exercise</button></div>`;
+    }
+  }
+  root.innerHTML = `<div class="s-in">${top}${body}${st.kind === 'warm' && !ex.faults.length ? '' : howto}</div>`;
+  mountFigs(root);
+  const tb = $('#tval', root); if (tb) startTick();
+}
+function stepperHtml(key, val, unit, label) {
+  return `<div><div class="stepper wide"><button data-act="dec" data-key="${key}" aria-label="Less">\u2212</button><div class="val"><span class="num" data-val="${key}">${val}</span>${unit ? `<small>${unit}</small>` : ''}</div><button data-act="inc" data-key="${key}" aria-label="More">+</button></div><div class="inline-cap">${label}</div></div>`;
+}
+function timerBlock(secs, small) {
+  const a = S.active; const t = a.timer;
+  const running = t && t.until > Date.now();
+  const left = running ? Math.ceil((t.until - Date.now()) / 1000) : secs;
+  return `<div class="timerbig num" id="tval" data-secs="${secs}" style="${small ? 'font-size:44px;margin:6px 0' : ''}">${left}</div><div class="row" style="margin-bottom:12px"><button class="btn ${running ? 'outline' : 'primary'}" data-act="${running ? 'tstop' : 'tstart'}">${running ? 'Stop' : 'Start ' + secs + ' s timer'}</button>${a.steps[a.i].kind === 'warm' ? `<button class="btn outline" data-act="next">Done</button>` : ''}</div>`;
+}
+let tickI = null;
+function startTick() { stopTick(); tickI = setInterval(tick, 250); tick(); }
+function stopTick() { if (tickI) clearInterval(tickI); tickI = null; }
+function tick() {
+  const a = S.active; if (!a) { stopTick(); return; }
+  // rest overlay
+  if (a.restUntil) {
+    const left = Math.max(0, a.restUntil - Date.now());
+    const r = $('#rest'); const arc = $('.arc', r); const tv = $('.t', r);
+    if (tv) { tv.textContent = Math.ceil(left / 1000); if (arc) { const C = 2 * Math.PI * 100; arc.style.strokeDashoffset = (C * (1 - left / a.restTotal)).toFixed(1); } }
+    if (left <= 0) { endRest(); }
+    return;
+  }
+  const el = $('#tval'); if (!el || !a.timer) return;
+  const left = Math.max(0, a.timer.until - Date.now());
+  el.textContent = Math.ceil(left / 1000);
+  if (left <= 0) { a.timer = null; beep(); save(); if (curStep().kind === 'warm') { advance(); } else { renderSession(); } }
+}
+function initAudio() { if (!S.sound || beep.ac) return; try { beep.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
+function beep() { if (!S.sound) return; try { const ac = beep.ac || (beep.ac = new (window.AudioContext || window.webkitAudioContext)()); if (ac.state === 'suspended') ac.resume(); const t = ac.currentTime; [0, 0.18].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value = i ? 880 : 660; g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.25, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.16); o.start(t + d); o.stop(t + d + 0.2); }); } catch (e) { } try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { } }
+
+function logSet(repsOverride) {
+  const a = S.active, st = curStep(), ex = EXERCISES[st.id];
+  const entry = { id: st.id, set: a.set, w: (ex.load === 'db1' || ex.load === 'db2') && st.kind === 'work' ? roundLb(a.w || 0) : null, effort: st.kind === 'work' ? a.effort : null, target: { reps: st.reps, secs: st.secs, sets: st.sets } };
+  if (st.secs) entry.secs = a.reps; else entry.reps = repsOverride != null ? repsOverride : a.reps;
+  a.log.push(entry);
+  if (entry.w != null && entry.w > 0) { S.loads[st.id] = entry.w; }
+  if (S.suggest[st.id]) delete S.suggest[st.id];
+  a.seenHow = a.seenHow || {}; a.seenHow[st.id] = true;
+  a.timer = null; a.effort = null;
+  const lastSetOfStep = a.set >= st.sets;
+  const lastStep = a.i >= a.steps.length - 1;
+  if (lastSetOfStep && lastStep) { finishSession(); return; }
+  const nextName = lastSetOfStep ? EXERCISES[a.steps[a.i + 1].id].name : `${ex.name}, set ${a.set + 1} of ${st.sets}`;
+  if (st.rest >= 30 && st.kind !== 'balance') { a.restTotal = st.rest * 1000; a.restUntil = Date.now() + a.restTotal; a.restNext = nextName; a.pendingAdvance = lastSetOfStep; save(); showRest(); }
+  else { if (lastSetOfStep) advance(); else { a.set++; save(); renderSession(); } }
+}
+function showRest() {
+  const a = S.active; const r = $('#rest'); const C = 2 * Math.PI * 100;
+  r.innerHTML = `<div><div class="ring"><svg viewBox="0 0 220 220"><circle class="track" cx="110" cy="110" r="100"/><circle class="arc" cx="110" cy="110" r="100" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="0"/></svg><div class="t num">${Math.ceil((a.restUntil - Date.now()) / 1000)}</div></div><div class="next">Rest. Next: ${esc(a.restNext)}</div><div class="row"><button class="btn" data-act="rest30">+30 s</button><button class="btn primary" data-act="restskip">Done resting</button></div></div>`;
+  r.hidden = false; startTick();
+}
+function endRest() {
+  const a = S.active; if (!a) return; if (a.restUntil) beep();
+  a.restUntil = null; $('#rest').hidden = true;
+  if (a.pendingAdvance) { a.pendingAdvance = false; advance(); } else { a.set++; save(); renderSession(); }
+}
+function advance() {
+  const a = S.active; a.i++; a.set = 1; a.w = null; a.reps = null; a.effort = null; a.timer = null;
+  if (a.i >= a.steps.length) { finishSession(); return; }
+  save(); renderSession();
+}
+function skipExercise() { const a = S.active; a.timer = null; if (a.i >= a.steps.length - 1) { finishSession(); return; } advance(); }
+
+/* Progression */
+function computeSuggestions(log) {
+  const byEx = {}; log.forEach(x => (byEx[x.id] = byEx[x.id] || []).push(x));
+  const out = {};
+  for (const id in byEx) {
+    const ex = EXERCISES[id], sets = byEx[id], tg = sets[0].target;
+    const hard = sets.filter(s => s.effort === 'hard').length;
+    const allTop = sets.length >= tg.sets && sets.every(s => tg.secs ? s.secs >= tg.secs : s.reps >= tg.reps[1]);
+    const anyLow = sets.some(s => tg.secs ? s.secs < tg.secs * 0.75 : s.reps < tg.reps[0]);
+    const w = sets[sets.length - 1].w;
+    if ((ex.load === 'db1' || ex.load === 'db2') && sets[0].effort !== null) {
+      if (allTop && hard === 0) { const to = roundLb((w || 0) + incFor(ex)); out[id] = { type: 'up', from: w, to, text: `Next time ${fmtW(to, ex.load === 'db2')}, up from ${fmtW(w, ex.load === 'db2')}` }; }
+      else if (anyLow || hard >= 2) { const to = roundLb((w || 0) * 0.9); if (to < w) out[id] = { type: 'down', from: w, to, text: `Next time ${fmtW(to, ex.load === 'db2')}, a little lighter than ${fmtW(w, ex.load === 'db2')}` }; }
+    } else if (ex.load === 'bw' && ex.harder && allTop && hard === 0 && sets[0].effort !== null) {
+      out[id] = { type: 'harder', to: null, text: ex.harder };
+    } else if (ex.load === 'band' && allTop && hard === 0 && sets[0].effort !== null) {
+      out[id] = { type: 'harder', to: null, text: 'That was easy: use the next band up, or step further from the anchor.' };
+    }
+  }
+  return out;
+}
+function finishSession() {
+  const a = S.active; a.done = true; a.timer = null; a.restUntil = null; $('#rest').hidden = true;
+  a.sugg = computeSuggestions(a.log); a.accept = {}; Object.keys(a.sugg).forEach(k => { a.accept[k] = true; });
+  a.minutes = Math.max(1, Math.round((Date.now() - a.started) / 60000));
+  save(); renderSession();
+}
+function summaryView() {
+  const a = S.active; const keys = Object.keys(a.sugg);
+  const fake = { sets: a.log };
+  return `<div class="s-in"><div class="s-top"><div class="prog">Workout ${a.letter} done</div></div>
+    <h1 style="margin-bottom:6px">${a.log.length ? 'Nicely done.' : 'Session closed.'}</h1><p class="muted num">${a.minutes} minute${a.minutes === 1 ? '' : 's'}, ${a.log.length} set${a.log.length === 1 ? '' : 's'} logged.</p>
+    ${a.log.length ? `<div class="card">${summaryRows(fake)}</div>` : ''}
+    ${keys.length ? `<div class="section"><h3>Next time</h3><div class="card"><ul class="rows">${keys.map(k => `<li><div class="grow"><div class="t">${esc(EXERCISES[k].name)}</div><div class="s">${esc(a.sugg[k].text)}</div></div>${a.sugg[k].to != null ? `<button class="chip sm" data-act="accept" data-k="${k}" aria-pressed="${a.accept[k]}">${a.accept[k] ? 'Yes' : 'Keep'}</button>` : ''}</li>`).join('')}</ul><p class="muted small" style="margin:10px 0 0">Yes sets the new weight as the default for the next session. Keep leaves it where it is.</p></div></div>` : (a.log.length ? `<p class="muted" style="margin-top:14px">${a.log.some(x => x.effort === 'hard') ? 'Keep the same weights next time; some sets felt hard. When every set reaches the top of its range and none feel hard, the weight goes up.' : 'No weight changes suggested yet. When every set reaches the top of its range and none feel hard, the weight goes up.'}</p>` : '')}
+    <div class="stack" style="margin-top:20px"><button class="btn primary block" data-act="savesession">Save workout</button>${a.log.length ? '' : '<button class="btn outline block" data-act="discard">Discard</button>'}</div></div>`;
+}
+function saveSession() {
+  const a = S.active;
+  if (a.log.length) {
+    Object.keys(a.sugg).forEach(k => { const s = a.sugg[k]; if (s.to != null) { if (a.accept[k]) S.suggest[k] = { type: s.type, to: s.to, text: (s.type === 'up' ? 'Up to ' : 'Down to ') + fmtW(s.to, EXERCISES[k].load === 'db2') + ' from last time. Change it if today feels different.' }; } else { S.suggest[k] = { type: 'harder', to: null, text: s.text }; } });
+    S.sessions.push({ id: Date.now().toString(36), date: new Date().toISOString(), day: todayKey(), letter: a.letter, level: a.level, essentials: a.essentials, minutes: a.minutes, sets: a.log.map(x => ({ id: x.id, set: x.set, w: x.w, reps: x.reps, secs: x.secs, effort: x.effort })) });
+    S.sessions.sort((x, y) => x.date < y.date ? -1 : 1);
+  }
+  S.active = null; save(); closeSession(); toast(a.log.length ? 'Workout saved' : 'Session discarded');
+}
+
+/* Onboarding */
+function onboarding() {
+  openSheet(`<h2>Hello, ${esc(S.name)}.</h2><p style="margin-top:8px">Serenity Strength is built around one goal: stronger bones, and the balance and power that keep them from breaking. Three short workouts a week, five levels from 10 to 60 minutes, and a log that tells you when to add weight.</p>
+    <div class="field"><label>Units</label><div class="seg"><button data-act="ob-units" data-units="lb" aria-pressed="${S.units === 'lb'}">Pounds</button><button data-act="ob-units" data-units="kg" aria-pressed="${S.units === 'kg'}">Kilograms</button></div></div>
+    <div class="field"><label>Schedule</label><div class="seg"><button data-act="ob-mode" data-mode="rolling" aria-pressed="${S.schedule.mode === 'rolling'}">Whenever I train</button><button data-act="ob-mode" data-mode="pinned" aria-pressed="${S.schedule.mode === 'pinned'}">Set days</button></div>${S.schedule.mode === 'pinned' ? `<div class="chips" style="margin-top:10px">${DOW.map((d, i) => `<button class="chip day" data-act="ob-day" data-day="${i}" aria-pressed="${S.schedule.days.includes(i)}">${d.slice(0, 2)}</button>`).join('')}</div>` : ''}</div>
+    <p class="muted small">Everything is stored on this phone only. You can change any of this in Settings.</p>
+    <button class="btn primary block" data-act="ob-done">Begin at Level 1</button>`);
+}
+
+/* Events */
+document.addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-act], [data-tab]'); if (!b) return;
+  if (b.dataset.tab && !b.dataset.act) { tab = b.dataset.tab; render(); return; }
+  const act = b.dataset.act, a = S.active;
+  switch (act) {
+    case 'tab': tab = b.dataset.tab; render(); break;
+    case 'start': if (S.active && !confirm('A workout is already in progress. Discard it and start fresh?')) return; S.active = null; initAudio(); startSession(b.dataset.letter, b.dataset.ess === '1'); break;
+    case 'resume': openSession(); break;
+    case 'discard': if (a && a.log.length && !confirm('Discard this workout? The logged sets will be lost.')) return; S.active = null; save(); closeSession(); break;
+    case 'pause': closeSession(); toast('Paused. Resume from Today.'); break;
+    case 'levelup': setLevel(S.level + 1); render(); toast('Welcome to Level ' + S.level); break;
+    case 'snooze': S.snooze = { level: S.level, until: fullAtLevel().length + 3 }; save(); render(); break;
+    case 'mode': S.schedule.mode = b.dataset.mode; save(); render(); break;
+    case 'day': { const d = +b.dataset.day; const i = S.schedule.days.indexOf(d); if (i >= 0) S.schedule.days.splice(i, 1); else S.schedule.days.push(d); S.schedule.days.sort(); save(); render(); break; }
+    case 'level': { const n = +b.dataset.level; if (n === S.level) return; if (confirm(`Change to Level ${n}? Workouts become about ${LEVELS[n].minutes} minutes.`)) { setLevel(n); render(); } break; }
+    case 'card': cardSheet(b.dataset.card); break;
+    case 'ex': exerciseSheet(b.dataset.ex); break;
+    case 'closesheet': closeSheet(); break;
+    case 'units': { if (S.units === b.dataset.units) return; const toKg = b.dataset.units === 'kg'; if (S.weight) S.weight = Math.round((toKg ? S.weight / LB_PER_KG : S.weight * LB_PER_KG) * 10) / 10; S.units = b.dataset.units; save(); render(); break; }
+    case 'step': S.step = +b.dataset.step; save(); render(); break;
+    case 'bone': S.bone = b.dataset.bone; save(); render(); toast('Impact work adjusted'); break;
+    case 'sound': S.sound = !S.sound; save(); render(); break;
+    case 'export': exportData(); break;
+    case 'import': $('#importfile').click(); break;
+    case 'reset': if (confirm('Erase all sessions and settings on this device? Export a backup first if you want to keep them.')) { S = fresh(); S.onboarded = true; save(); render(); toast('Erased'); } break;
+    /* session */
+    case 'next': a.timer = null; advance(); break;
+    case 'inc': case 'dec': {
+      const k = b.dataset.key, dir = act === 'inc' ? 1 : -1;
+      if (k === 'w') a.w = Math.max(0, roundLb((a.w || 0) + dir * stepLb()));
+      else { const st = curStep(); a.reps = Math.max(0, (a.reps || 0) + dir * (st.secs ? 5 : 1)); }
+      save(); const v = $(`[data-val="${k}"]`, $('#session')); if (v) v.textContent = k === 'w' ? toDisp(a.w) : a.reps; else renderSession();
+      if (k === 'reps' && !a.timer) { const tv = $('#tval', $('#session')); if (tv) { tv.textContent = a.reps; tv.dataset.secs = a.reps; const tb = $('[data-act="tstart"]', $('#session')); if (tb) tb.textContent = 'Start ' + a.reps + ' s timer'; } } break;
+    }
+    case 'effort': a.effort = b.dataset.effort; save(); renderSession(); break;
+    case 'logset': logSet(b.dataset.reps != null ? +b.dataset.reps : null); break;
+    case 'skipex': if (confirm('Skip ' + EXERCISES[curStep().id].name + ' today?')) skipExercise(); break;
+    case 'tstart': { const el = $('#tval'); const secs = +el.dataset.secs; a.timer = { until: Date.now() + secs * 1000 }; save(); initAudio(); renderSession(); break; }
+    case 'tstop': a.timer = null; save(); renderSession(); break;
+    case 'rest30': a.restUntil += 30000; a.restTotal += 30000; save(); break;
+    case 'restskip': endRest(); break;
+    case 'accept': a.accept[b.dataset.k] = !a.accept[b.dataset.k]; save(); renderSession(); break;
+    case 'savesession': saveSession(); break;
+    /* onboarding */
+    case 'ob-units': S.units = b.dataset.units; save(); onboarding(); break;
+    case 'ob-mode': S.schedule.mode = b.dataset.mode; save(); onboarding(); break;
+    case 'ob-day': { const d = +b.dataset.day; const i = S.schedule.days.indexOf(d); if (i >= 0) S.schedule.days.splice(i, 1); else S.schedule.days.push(d); S.schedule.days.sort(); save(); onboarding(); break; }
+    case 'ob-done': S.onboarded = true; save(); closeSheet(); render(); break;
+  }
+});
+document.addEventListener('change', (ev) => {
+  const t = ev.target;
+  if (t.id === 'importfile' && t.files[0]) { importData(t.files[0]); t.value = ''; return; }
+  if (t.dataset.set === 'name') { S.name = t.value.trim() || DEFAULT_NAME; save(); toast('Saved'); }
+  if (t.dataset.set === 'weight') { const v = parseFloat(t.value); S.weight = isFinite(v) && v > 0 ? v : null; save(); toast('Saved'); }
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+$('#sheet').addEventListener('click', (ev) => { if (ev.target.id === 'sheet') closeSheet(); });
+
+/* Init */
+render();
+if (!S.onboarded) onboarding();
+if (S.active) { if (S.active.done) { openSession(); } }
+
+</script>
+</body>
+</html>
