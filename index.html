@@ -276,24 +276,36 @@ const FIG = (() => {
   const rot = (v, a) => [v[0] * Math.cos(a * D) - v[1] * Math.sin(a * D), v[0] * Math.sin(a * D) + v[1] * Math.cos(a * D)];
   const add = (p, v) => [p[0] + v[0], p[1] + v[1]];
 
-  const SIDE = { view: 'side', ax: 118, ay: FLOOR - 5, s: 0, t: 0, b: 0, hd: 0, ft: 0, s2: null, t2: null, ft2: 0,
+  const SIDE = { view: 'side', root: 'ankle', ax: 118, ay: FLOOR - 5, hx: 118, hy: 89, clamp: true, ts: 1, ss: 1, s: 0, t: 0, b: 0, hd: 0, ft: 0, s2: null, t2: null, ft2: 0,
     ua: 0, fa: 0, ua2: null, fa2: null, uas: 1, fas: 1, ua2s: 1, fa2s: 1, t2s: 1, s2s: 1, far: 0, props: [] };
+  const TOP = { view: 'top', px: 120, py: 108, hy: -12, sp: 28, props: [] };
   const FRONT = { view: 'front', px: 120, tl: 4, tr: 4, sl: 0, sr: 0, kl: 0, kr: 0, lift: 0, lt: 0,
     ual: 6, uar: 6, fal: 6, far: 6, uals: 1, uars: 1, fals: 1, fars: 1, hd: 0, props: [] };
 
   function solveSide(P) {
-    const A = [P.ax, P.ay];
-    const K = up(A, P.s, L.shin), H = up(K, P.t, L.thigh), S = up(H, P.b, L.torso);
+    let A, K, H;
+    if (P.root === 'hip') { H = [P.hx, P.hy]; K = fd(H, -P.t, L.thigh * P.ts); A = fd(K, -P.s, L.shin * P.ss); }
+    else { A = [P.ax, P.ay]; K = up(A, P.s, L.shin); H = up(K, P.t, L.thigh); }
+    const S = up(H, P.b, L.torso);
     const N = up(S, P.b + P.hd, L.neck), HC = up(N, P.b + P.hd, L.head);
     const t2 = P.t2 == null ? P.t : P.t2, s2 = P.s2 == null ? P.s : P.s2;
     const K2 = fd(H, -t2, L.thigh * P.t2s), A2 = fd(K2, -s2, L.shin * P.s2s);
     const fwd2 = rot([Math.cos(s2 * D), Math.sin(s2 * D)], P.ft2);
     const toe2 = add(A2, [fwd2[0] * L.foot, fwd2[1] * L.foot]), heel2 = add(A2, [-fwd2[0] * L.heel, -fwd2[1] * L.heel]);
-    const toe = add(A, rot([L.foot, 5], P.ft)), heel = add(A, rot([-L.heel, 5], P.ft));
+    let toe, heel;
+    if (P.root === 'hip') { const f = rot([Math.cos(P.s * D), Math.sin(P.s * D)], P.ft); toe = add(A, [f[0] * L.foot, f[1] * L.foot]); heel = add(A, [-f[0] * L.heel, -f[1] * L.heel]); }
+    else { toe = add(A, rot([L.foot, 5], P.ft)); heel = add(A, rot([-L.heel, 5], P.ft)); }
     const E = fd(S, P.ua, L.ua * P.uas), W = fd(E, P.fa, L.fa * P.fas);
     const ua2 = P.ua2 == null ? P.ua : P.ua2, fa2 = P.fa2 == null ? P.fa : P.fa2;
     const E2 = fd(S, ua2, L.ua * P.ua2s), W2 = fd(E2, fa2, L.fa * P.fa2s);
-    return { A, K, H, S, N, HC, K2, A2, toe, heel, toe2, heel2, E, W, E2, W2 };
+    const J = { A, K, H, S, N, HC, K2, A2, toe, heel, toe2, heel2, E, W, E2, W2 };
+    if (P.root === 'hip' && P.clamp !== false) { const dy = (FLOOR - 5) - Math.max(A[1], A2[1]); for (const k in J) J[k] = [J[k][0], J[k][1] + dy]; }
+    return J;
+  }
+  function solveTop(P) {
+    const C = [P.px, P.py], W = [P.px, P.py + P.hy];
+    return { C, W, SL: [P.px - 16, P.py], SR: [P.px + 16, P.py], EL: [P.px - P.sp, P.py + P.hy * 0.55], ER: [P.px + P.sp, P.py + P.hy * 0.55],
+      FL: [P.px - 13, P.py + 24], FR: [P.px + 13, P.py + 24], ANCH: [10, P.py] };
   }
   function solveFront(P) {
     const hipY = 0;
@@ -321,15 +333,31 @@ const FIG = (() => {
     const propsG = el('g', { class: 'fig-props' });
     const farG = el('g', { class: 'fig-far' });
     const nearG = el('g', { class: 'fig-near' });
-    svg.appendChild(el('line', { class: 'fig-floor', x1: 0, y1: FLOOR, x2: 240, y2: FLOOR }));
+    const floorEl = el('line', { class: 'fig-floor', x1: 0, y1: FLOOR, x2: 240, y2: FLOOR });
+    svg.appendChild(floorEl);
     svg.appendChild(propsG); svg.appendChild(farG); svg.appendChild(nearG);
     container.appendChild(svg);
     const cache = {};
     const line = (g, key) => cache[key] || (cache[key] = g.appendChild(el('polyline', { class: 'fig-line' })));
     const circ = (g, key) => cache[key] || (cache[key] = g.appendChild(el('circle', { class: 'fig-head', r: L.head }))
     );
+    function drawTop(P) {
+      const J = solveTop(P);
+      floorEl.style.display = 'none';
+      farG.removeAttribute('transform'); farG.setAttribute('opacity', '1');
+      line(farG, 'leg2').setAttribute('points', pts([[J.FL[0], J.FL[1] - 9], [J.FL[0], J.FL[1] + 9]]));
+      line(farG, 'heel2').setAttribute('points', pts([[J.FR[0], J.FR[1] - 9], [J.FR[0], J.FR[1] + 9]]));
+      line(farG, 'arm2').setAttribute('points', pts([J.SL, J.EL, J.W]));
+      line(nearG, 'leg').setAttribute('points', pts([J.SL, J.SR]));
+      line(nearG, 'heel').setAttribute('points', pts([J.SR, J.ER, J.W]));
+      line(nearG, 'torso').setAttribute('points', pts([J.C, [J.C[0], J.C[1] - 14]]));
+      line(nearG, 'arm').setAttribute('points', pts([J.C, J.C]));
+      const hc = circ(nearG, 'head'); hc.setAttribute('cx', J.C[0]); hc.setAttribute('cy', J.C[1]);
+      drawProps(P, J);
+    }
     function drawSide(P) {
       const J = solveSide(P);
+      floorEl.style.display = '';
       farG.setAttribute('transform', 'translate(3 0)');
       farG.setAttribute('opacity', '0.42');
       line(farG, 'leg2').setAttribute('points', pts([J.H, J.K2, J.A2, J.toe2]));
@@ -344,6 +372,7 @@ const FIG = (() => {
     }
     function drawFront(P) {
       const J = solveFront(P);
+      floorEl.style.display = '';
       farG.removeAttribute('transform'); farG.setAttribute('opacity', '1');
       line(farG, 'leg2').setAttribute('points', pts([J.pel, J.hl, J.kl, J.al, [J.al[0] - 7, J.al[1]]]));
       line(farG, 'heel2').setAttribute('points', pts([J.al, [J.al[0] + 7, J.al[1]]]));
@@ -382,9 +411,16 @@ const FIG = (() => {
     }
     let raf = null, running = false, keys = null, base = null, t0 = 0, total = 0, still = null;
     const ease = (u) => 0.5 - 0.5 * Math.cos(Math.PI * u);
+    const ANG = { ua: 1, fa: 1, ua2: 1, fa2: 1 };
     function lerpPose(a, b, u) {
       const o = Object.assign({}, a);
-      for (const k in a) { if (typeof a[k] === 'number' && typeof b[k] === 'number') o[k] = a[k] + (b[k] - a[k]) * u; }
+      const wrap = a.wrap || b.wrap;
+      for (const k in a) {
+        if (typeof a[k] === 'number' && typeof b[k] === 'number') {
+          if (wrap && ANG[k]) { const d = (((b[k] - a[k]) % 360) + 540) % 360 - 180; o[k] = a[k] + d * u; }
+          else o[k] = a[k] + (b[k] - a[k]) * u;
+        }
+      }
       o.props = u < 0.5 ? a.props : b.props;
       // bench/step props interpolate nothing; band points reference joints so they follow
       return o;
@@ -398,7 +434,7 @@ const FIG = (() => {
       }
       return keys[0];
     }
-    function draw(P) { (P.view === 'front' ? drawFront : drawSide)(P); }
+    function draw(P) { (P.view === 'front' ? drawFront : P.view === 'top' ? drawTop : drawSide)(P); }
     function frame(now) {
       if (!running) return;
       const t = ((now - t0) / 1000) % total;
@@ -407,7 +443,7 @@ const FIG = (() => {
     }
     const api = {
       set(ex) {
-        base = ex.view === 'front' ? FRONT : SIDE;
+        base = ex.view === 'front' ? FRONT : ex.view === 'top' ? TOP : SIDE;
         keys = ex.keys.map(k => Object.assign({}, base, ex.base || {}, k));
         total = keys.reduce((s, k) => s + (k.d == null ? 1 : k.d), 0);
         still = keys[0];
@@ -681,11 +717,12 @@ const EXERCISES = {
     faults: ['Leaning or letting one shoulder drop.', 'Holding the breath.', 'Rushing the steps.'],
     why: 'Carrying heavy things while walking loads the hips and spine with every step, trains the grip, and builds the specific strength of daily life. Evidence for the carry itself is thinner than for the big lifts, but it fits the ESSA guidance on weight-bearing loading.',
     refs: ['essa', 'nsca'],
+    base: { root: 'hip', b: 3, ua: 0, fa: 0 },
     keys: [
-      { t2: -22, s2: 12, ay: 171, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] },
-      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] },
-      { t2: 22, s2: 0, ay: 171, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] },
-      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, d: 0.55, props: [DB('W'), DB('W2')] }
+      { t: -22, s: -8, t2: 24, s2: 22, ft: 0, ft2: 0, d: 0.42, props: [DB('W'), DB('W2')] },
+      { t: 0, s: 0, t2: -30, s2: 45, ft: 0, ft2: -40, d: 0.42, props: [DB('W'), DB('W2')] },
+      { t: 24, s: 22, t2: -22, s2: -8, ft: 0, ft2: 0, d: 0.42, props: [DB('W'), DB('W2')] },
+      { t: -30, s: 45, t2: 0, s2: 0, ft: -40, ft2: 0, d: 0.42, props: [DB('W'), DB('W2')] }
     ]
   },
   suitcase_carry: {
@@ -695,11 +732,12 @@ const EXERCISES = {
     faults: ['Leaning away from the weight.', 'Shrugging the loaded shoulder.'],
     why: 'The offset load makes the trunk muscles fight to keep the spine vertical, a neutral-spine core exercise, while the hip on the loaded side works harder with every step.',
     refs: ['essa', 'nsca'],
+    base: { root: 'hip', b: 2, ua: 0, fa: 0, ua2: -25, fa2: -30 },
     keys: [
-      { t2: -22, s2: 12, ay: 171, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] },
-      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] },
-      { t2: 22, s2: 0, ay: 171, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] },
-      { t2: 0, s2: 0, ay: 169, ua: 0, fa: 0, ua2: -25, fa2: -30, d: 0.55, props: [DB('W')] }
+      { t: -22, s: -8, t2: 24, s2: 22, ft: 0, ft2: 0, d: 0.42, props: [DB('W')] },
+      { t: 0, s: 0, t2: -30, s2: 45, ft: 0, ft2: -40, d: 0.42, props: [DB('W')] },
+      { t: 24, s: 22, t2: -22, s2: -8, ft: 0, ft2: 0, d: 0.42, props: [DB('W')] },
+      { t: -30, s: 45, t2: 0, s2: 0, ft: -40, ft2: 0, d: 0.42, props: [DB('W')] }
     ]
   },
   glute_bridge: {
@@ -724,12 +762,12 @@ const EXERCISES = {
     faults: ['Arching the back and pushing the ribs up.', 'Looking up at the ceiling, which arches the neck.', 'Feet too far forward, which shifts the work to the hamstrings.'],
     why: 'Loads the hip joint directly with the heaviest single dumbbell you own, working the glutes, the muscles that pull on the femur. The femoral neck is where hip fractures happen and where loading needs to reach.',
     refs: ['essa', 'nsca'],
-    base: { ax: 150, s: 10, ua: -95, fa: -80 },
+    base: { ax: 150, ua: -95, fa: -80 },
     keys: [
-      { t: -105, b: -66, hd: 80, d: 0.9, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
-      { t: -85, b: -63, hd: 60, d: 0.4, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
-      { t: -85, b: -63, hd: 60, d: 0.9, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
-      { t: -105, b: -66, hd: 80, d: 0.5, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] }
+      { s: 8, t: -109, b: -67, hd: 47, d: 0.9, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
+      { s: 17, t: -81, b: -90, hd: 70, d: 0.4, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
+      { s: 17, t: -81, b: -90, hd: 70, d: 0.9, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] },
+      { s: 8, t: -109, b: -67, hd: 47, d: 0.5, props: [{ type: 'bench', x: 20, y: 136, w: 60, h: 40 }, DB('H', { dy: -10, w: 16, h: 7 })] }
     ]
   },
   step_up: {
@@ -796,15 +834,15 @@ const EXERCISES = {
     faults: ['Lower back lifting off the floor.', 'Moving fast.', 'Holding the breath.'],
     why: 'Trains the trunk to hold a neutral spine while the limbs move, which is exactly the skill the lifts require. ESSA advises against loaded spinal flexion (crunches) for bone health; this is the alternative.',
     refs: ['essa'],
-    base: { ax: 158, ay: 118, s: -90, t: 180, b: -90, hd: 0, ua: 180, fa: 180, ua2: 180, fa2: 180, t2: 180, s2: -90 },
+    base: { root: 'hip', clamp: false, hx: 118, hy: 160, s: -90, t: -180, b: -90, hd: 0, ua: -180, fa: -180, ua2: -180, fa2: -180, t2: -180, s2: -90 },
     keys: [
-      { d: 0.9 },
-      { s: -102, t: -102, ax: 198, ay: 143, ua2: -100, fa2: -100, d: 0.4 },
-      { s: -102, t: -102, ax: 198, ay: 143, ua2: -100, fa2: -100, d: 0.9 },
-      { d: 0.4 },
-      { d: 0.9 },
-      { t2: -102, s2: -102, ua: -100, fa: -100, d: 0.4 },
-      { t2: -102, s2: -102, ua: -100, fa: -100, d: 0.9 }
+      { d: 1.2 },
+      { s: -95, t: -95, ua2: -100, fa2: -100, d: 0.5 },
+      { s: -95, t: -95, ua2: -100, fa2: -100, d: 1.2 },
+      { d: 0.5 },
+      { d: 1.2 },
+      { t2: -95, s2: -95, ua: -100, fa: -100, d: 0.5 },
+      { t2: -95, s2: -95, ua: -100, fa: -100, d: 1.2 }
     ]
   },
   bird_dog: {
@@ -833,17 +871,17 @@ const EXERCISES = {
     keys: [ { d: 1.8 }, { b: 80.5, d: 1.8 } ]
   },
   pallof: {
-    name: 'Pallof press', pattern: 'Trunk, anti-rotation', load: 'band', unit: 'reps', sides: true, start: null, view: 'front',
+    name: 'Pallof press', pattern: 'Trunk, anti-rotation', load: 'band', unit: 'reps', sides: true, start: null, view: 'top',
     equipment: 'Loop band anchored at chest height', evidence: 'indirect',
-    cues: ['Anchor the band at chest height to your side. Hold it with both hands at the center of your chest, feet shoulder width.', 'Press the hands straight out in front of you and hold for two seconds. The band will try to twist you; do not let it.', 'Bring the hands back to the chest. Do all reps, then face the other way.'],
+    cues: ['The figure is drawn from above. Anchor the band at chest height to your side. Hold it with both hands at the center of your chest, feet shoulder width.', 'Press the hands straight out in front of you and hold for two seconds. The band will try to twist you; do not let it.', 'Bring the hands back to the chest. Do all reps, then face the other way.'],
     faults: ['Rotating toward the anchor as the arms extend.', 'Leaning away from the anchor.'],
     why: 'Anti-rotation training for the trunk with the spine held still, the kind of core work ESSA favors over flexion.',
     refs: ['essa'],
     keys: [
-      { ual: -20, uar: 30, fal: -70, far: -50, uals: 0.55, uars: 0.55, fals: 0.7, fars: 0.7, kl: 12, kr: 12, tl: 12, tr: 12, d: 0.8, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] },
-      { ual: -5, uar: 5, fal: -6, far: 6, uals: 0.3, uars: 0.3, fals: 0.3, fars: 0.3, kl: 12, kr: 12, tl: 12, tr: 12, d: 0.4, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] },
-      { ual: -5, uar: 5, fal: -6, far: 6, uals: 0.3, uars: 0.3, fals: 0.3, fars: 0.3, kl: 12, kr: 12, tl: 12, tr: 12, d: 1.2, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] },
-      { ual: -20, uar: 30, fal: -70, far: -50, uals: 0.55, uars: 0.55, fals: 0.7, fars: 0.7, kl: 12, kr: 12, tl: 12, tr: 12, d: 0.5, props: [{ type: 'band', pts: [[8, 78], 'WR'] }] }
+      { hy: -12, sp: 30, d: 0.8, props: [{ type: 'wall', x: 6, y: 104, w: 8, h: 8 }, { type: 'band', pts: ['ANCH', 'W'] }] },
+      { hy: -54, sp: 8, d: 0.5, props: [{ type: 'wall', x: 6, y: 104, w: 8, h: 8 }, { type: 'band', pts: ['ANCH', 'W'] }] },
+      { hy: -54, sp: 8, d: 1.3, props: [{ type: 'wall', x: 6, y: 104, w: 8, h: 8 }, { type: 'band', pts: ['ANCH', 'W'] }] },
+      { hy: -12, sp: 30, d: 0.5, props: [{ type: 'wall', x: 6, y: 104, w: 8, h: 8 }, { type: 'band', pts: ['ANCH', 'W'] }] }
     ]
   },
   db_swing: {
@@ -867,13 +905,12 @@ const EXERCISES = {
     faults: ['Looking down at the feet.', 'Rushing.'],
     why: 'Balance training that challenges you is the exercise ingredient with the strongest evidence for preventing falls, reducing the rate of falls by about a quarter in the Cochrane review.',
     refs: ['sherrington'],
+    base: { root: 'hip', ua: 55, fa: 60, ua2: -55, fa2: -60 },
     keys: [
-      { ax: 100, t2: 12, s2: 8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
-      { ax: 100, t2: -42, s2: 34, ft2: 20, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
-      { ax: 100, t2: -12, s2: -8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.6 },
-      { ax: 122, t2: 12, s2: 8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
-      { ax: 122, t2: -42, s2: 34, ft2: 20, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 0.5 },
-      { ax: 122, t2: -12, s2: -8, ua: 55, fa: 60, ua2: -55, fa2: -60, d: 1.1 }
+      { t: -14, s: -6, t2: 12, s2: 6, ft: 0, ft2: 0, d: 0.55 },
+      { t: 0, s: 0, t2: -20, s2: 32, ft: 0, ft2: -30, d: 0.55 },
+      { t: 12, s: 6, t2: -14, s2: -6, ft: 0, ft2: 0, d: 0.55 },
+      { t: -20, s: 32, t2: 0, s2: 0, ft: -30, ft2: 0, d: 0.55 }
     ]
   },
   sl_stance: {
@@ -910,11 +947,12 @@ const EXERCISES = {
     cues: ['Lift the knees to hip height, swing the arms, breathe.', 'Build a little heat; this should feel easy.'],
     faults: [],
     why: 'Raises muscle temperature and heart rate before loading.', refs: ['nsca'],
+    base: { root: 'hip' },
     keys: [
-      { t2: -70, s2: 30, ft2: 10, ay: 170, ua: -30, fa: -20, ua2: 35, fa2: 60, d: 0.4 },
-      { t2: 0, s2: 0, ay: 171, ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.4 },
-      { t2: -70, s2: 30, ft2: 10, ay: 170, ua: 35, fa: 60, ua2: -30, fa2: -20, d: 0.4 },
-      { t2: 0, s2: 0, ay: 171, ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.4 }
+      { t: -70, s: 0, t2: 0, s2: 0, ua: -30, fa: -20, ua2: 35, fa2: 60, d: 0.4 },
+      { t: 0, s: 0, t2: 0, s2: 0, ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.4 },
+      { t: 0, s: 0, t2: -70, s2: 0, ua: 35, fa: 60, ua2: -30, fa2: -20, d: 0.4 },
+      { t: 0, s: 0, t2: 0, s2: 0, ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.4 }
     ]
   },
   arm_circles: {
@@ -924,9 +962,8 @@ const EXERCISES = {
     faults: [],
     why: 'Warms the shoulders before pressing and pulling.', refs: ['nsca'],
     keys: [
-      { ua: 0, fa: 0, ua2: 0, fa2: 0, d: 0.45 }, { ua: 90, fa: 90, ua2: 90, fa2: 90, d: 0.45 },
-      { ua: 180, fa: 180, ua2: 180, fa2: 180, d: 0.45 }, { ua: 270, fa: 270, ua2: 270, fa2: 270, d: 0.45 },
-      { ua: 360, fa: 360, ua2: 360, fa2: 360, d: 0.02 }
+      { ua: 0, fa: 0, ua2: 0, fa2: 0, wrap: true, d: 0.45 }, { ua: 90, fa: 90, ua2: 90, fa2: 90, wrap: true, d: 0.45 },
+      { ua: 180, fa: 180, ua2: 180, fa2: 180, wrap: true, d: 0.45 }, { ua: 270, fa: 270, ua2: 270, fa2: 270, wrap: true, d: 0.45 }
     ]
   }
 };
