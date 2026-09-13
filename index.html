@@ -1489,8 +1489,37 @@ function tick() {
   el.textContent = Math.ceil(left / 1000);
   if (left <= 0) { a.timer = null; beep(); save(); if (curStep().kind === 'warm') { advance(); } else { renderSession(); } }
 }
-function initAudio() { if (!S.sound || beep.ac) return; try { beep.ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { } }
-function beep() { if (!S.sound) return; try { const ac = beep.ac || (beep.ac = new (window.AudioContext || window.webkitAudioContext)()); if (ac.state === 'suspended') ac.resume(); const t = ac.currentTime; [0, 0.18].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.connect(g); g.connect(ac.destination); o.frequency.value = i ? 880 : 660; g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.25, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.16); o.start(t + d); o.stop(t + d + 0.2); }); } catch (e) { } try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { } }
+let SND = null;
+function makeChime() {
+  const sr = 16000, n = Math.floor(sr * 0.45), data = new Int16Array(n);
+  const tone = (t, f, t0, len) => { if (t < t0 || t > t0 + len) return 0; const x = (t - t0) / len; return Math.sin(2 * Math.PI * f * (t - t0)) * Math.min(1, x * 30) * Math.pow(1 - x, 1.7); };
+  for (let i = 0; i < n; i++) { const t = i / sr; data[i] = Math.max(-1, Math.min(1, 0.85 * (tone(t, 660, 0, 0.22) + tone(t, 880, 0.2, 0.25)))) * 32767; }
+  const buf = new ArrayBuffer(44 + n * 2), dv = new DataView(buf);
+  const str = (o, x) => { for (let i = 0; i < x.length; i++) dv.setUint8(o + i, x.charCodeAt(i)); };
+  str(0, 'RIFF'); dv.setUint32(4, 36 + n * 2, true); str(8, 'WAVE'); str(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true);
+  dv.setUint32(24, sr, true); dv.setUint32(28, sr * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); str(36, 'data'); dv.setUint32(40, n * 2, true);
+  new Int16Array(buf, 44).set(data);
+  const a = new Audio(URL.createObjectURL(new Blob([buf], { type: 'audio/wav' })));
+  a.setAttribute('playsinline', ''); a.preload = 'auto';
+  return a;
+}
+/* Must run inside a tap: iOS only lets a sound play later if that same element was started by a user gesture first. */
+function initAudio() {
+  if (!S.sound) return;
+  try {
+    if (!SND) SND = makeChime();
+    if (SND.unlocked) return;
+    SND.muted = true;
+    const p = SND.play();
+    const done = () => { SND.pause(); SND.currentTime = 0; SND.muted = false; SND.unlocked = true; };
+    if (p && p.then) p.then(done).catch(() => { SND.muted = false; }); else done();
+  } catch (e) { }
+}
+function beep() {
+  if (!S.sound) return;
+  try { if (!SND) SND = makeChime(); SND.muted = false; SND.currentTime = 0; const p = SND.play(); if (p && p.catch) p.catch(() => { }); } catch (e) { }
+  try { if (navigator.vibrate) navigator.vibrate([120, 60, 120]); } catch (e) { }
+}
 
 function logSet(repsOverride) {
   const a = S.active, st = curStep(), ex = EXERCISES[st.id];
@@ -1585,6 +1614,7 @@ document.addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-act], [data-tab]'); if (!b) return;
   if (b.dataset.tab && !b.dataset.act) { tab = b.dataset.tab; render(); return; }
   const act = b.dataset.act, a = S.active;
+  if (['start', 'resume', 'tstart', 'tstop', 'logset', 'restskip', 'rest30', 'next', 'effort', 'inc', 'dec'].includes(act)) initAudio();
   switch (act) {
     case 'tab': tab = b.dataset.tab; render(); break;
     case 'start': if (S.active && !confirm('A workout is already in progress. Discard it and start fresh?')) return; S.active = null; initAudio(); startSession(b.dataset.letter, b.dataset.ess === '1'); break;
@@ -1602,7 +1632,7 @@ document.addEventListener('click', (ev) => {
     case 'units': { if (S.units === b.dataset.units) return; const toKg = b.dataset.units === 'kg'; if (S.weight) S.weight = Math.round((toKg ? S.weight / LB_PER_KG : S.weight * LB_PER_KG) * 10) / 10; S.units = b.dataset.units; save(); render(); break; }
     case 'step': S.step = +b.dataset.step; save(); render(); break;
     case 'bone': S.bone = b.dataset.bone; save(); render(); toast('Impact work adjusted'); break;
-    case 'sound': S.sound = !S.sound; save(); render(); break;
+    case 'sound': S.sound = !S.sound; save(); if (S.sound) { if (SND) SND.unlocked = false; initAudio(); beep(); } render(); break;
     case 'export': exportData(); break;
     case 'import': $('#importfile').click(); break;
     case 'reset': if (confirm('Erase all sessions and settings on this device? Export a backup first if you want to keep them.')) { S = fresh(); S.onboarded = true; save(); render(); toast('Erased'); } break;
