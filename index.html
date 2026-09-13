@@ -732,7 +732,7 @@ const EXERCISES = {
     faults: ['Leaning away from the weight.', 'Shrugging the loaded shoulder.'],
     why: 'The offset load makes the trunk muscles fight to keep the spine vertical, a neutral-spine core exercise, while the hip on the loaded side works harder with every step.',
     refs: ['essa', 'nsca'],
-    base: { root: 'hip', b: 2, ua: 0, fa: 0, ua2: -25, fa2: -30 },
+    base: { root: 'hip', b: 2, ua: 0, fa: 0, ua2: -9, fa2: -11 },
     keys: [
       { t: -22, s: -8, t2: 24, s2: 22, ft: 0, ft2: 0, d: 0.42, props: [DB('W')] },
       { t: 0, s: 0, t2: -30, s2: 45, ft: 0, ft2: -40, d: 0.42, props: [DB('W')] },
@@ -1381,7 +1381,7 @@ function viewLearn() {
   PATTERN_ORDER.filter(p => groups[p]).forEach(p => {
     html += `<div class="card" style="padding:6px 18px"><div class="muted small" style="padding:10px 0 2px">${esc(p)}</div><ul class="rows">${groups[p].map(id => `<li><button class="rowbtn" data-act="ex" data-ex="${id}"><div class="thumb figbox" data-ex="${id}"></div><div class="grow"><div class="t">${esc(EXERCISES[id].name)}</div><div class="s">${esc(EXERCISES[id].equipment)}</div></div><span class="chev" aria-hidden="true">\u203a</span></button></li>`).join('')}</ul></div>`;
   });
-  html += `</div><div class="section"><h3>Sources</h3><p class="muted small">Alphabetical by first author.</p><div class="card"><ul class="refs small muted" style="list-style:none;padding:0;margin:0">${REF_ORDER.map(k => `<li id="ref-${k}" style="padding-left:18px;text-indent:-18px;margin-bottom:10px">${esc(REFS[k])}</li>`).join('')}</ul></div></div>`;
+  html += `</div><div class="section"><h3>Sources</h3><div class="card"><ul class="refs small muted" style="list-style:none;padding:0;margin:0">${REF_ORDER.map(k => `<li id="ref-${k}" style="padding-left:18px;text-indent:-18px;margin-bottom:10px">${esc(REFS[k])}</li>`).join('')}</ul></div></div>`;
   return html;
 }
 function exerciseSheet(id) {
