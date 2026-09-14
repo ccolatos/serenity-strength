@@ -258,7 +258,7 @@ ul.plain li { margin-bottom: 6px; }
   <main id="screen" aria-live="polite"></main>
   <nav id="tabs" aria-label="Sections"><div class="tabs-in"></div></nav>
   <section id="session" hidden aria-label="Workout"></section>
-  <div id="rest" hidden></div>
+  <div id="rest" hidden role="dialog" aria-label="Rest timer"></div>
   <div id="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true"></div></div>
   <div id="toast" role="status"></div>
 </div>
@@ -1196,7 +1196,7 @@ function sanitize(o) {
   const stepOk = (st) => st && typeof st === 'object' && ['warm', 'work', 'impact', 'balance'].includes(st.kind) && EXERCISES[st.id] && Number.isInteger(st.sets) && st.sets >= 1 && (st.reps == null || (Array.isArray(st.reps) && st.reps.length === 2 && st.reps.every(n => Number.isInteger(n))) || Number.isInteger(st.reps)) && (st.secs == null || num(st.secs, -1) >= 0);
   const activeOk = a && typeof a === 'object' && LET.includes(a.letter) && [1, 2, 3, 4, 5].includes(a.level) && Array.isArray(a.steps) && a.steps.length && a.steps.every(stepOk) && Number.isInteger(a.i) && a.i >= 0 && a.i <= a.steps.length && Number.isInteger(a.set) && a.set >= 1 && Array.isArray(a.log) && a.log.every(setOk) && num(a.started, -1) >= 0;
   if (!activeOk) s.active = null;
-  else { a.log = a.log.map(y => Object.assign(cleanSet(y), { target: y.target && typeof y.target === 'object' ? y.target : { reps: null, secs: null, sets: 1 }, prev: y.prev == null ? undefined : num(y.prev, 0) })); a.done = !!a.done; a.essentials = !!a.essentials; if (a.i >= a.steps.length && !a.done) a.i = a.steps.length - 1; a.restUntil = num(a.restUntil, null); a.timer = a.timer && num(a.timer.until, null) != null ? { until: a.timer.until } : null; a.pauseTotal = Math.max(0, num(a.pauseTotal, 0)); a.pausedAt = num(a.pausedAt, null); a.sugg = a.sugg && typeof a.sugg === 'object' ? a.sugg : {}; a.accept = a.accept && typeof a.accept === 'object' ? a.accept : {}; }
+  else { a.log = a.log.map(y => Object.assign(cleanSet(y), { target: y.target && typeof y.target === 'object' ? y.target : { reps: null, secs: null, sets: 1 }, prev: y.prev == null ? undefined : num(y.prev, 0) })); a.done = !!a.done; a.essentials = !!a.essentials; if (a.done) a.minutes = Math.max(1, num(a.minutes, 1)); if (a.i >= a.steps.length && !a.done) a.i = a.steps.length - 1; a.restUntil = num(a.restUntil, null); a.timer = a.timer && num(a.timer.until, null) != null ? { until: a.timer.until } : null; a.pauseTotal = Math.max(0, num(a.pauseTotal, 0)); a.pausedAt = num(a.pausedAt, null); a.sugg = a.sugg && typeof a.sugg === 'object' ? a.sugg : {}; a.accept = a.accept && typeof a.accept === 'object' ? a.accept : {}; }
   return s;
 }
 function load() {
@@ -1326,7 +1326,7 @@ function viewToday() {
       <li><span>${w.finisher.map(f => esc(f.ex.name)).join(', ')}</span><span class="rx">finish</span></li></ul>
     <button class="btn primary" data-act="start" data-letter="${letter}">Start workout ${letter}</button>
     <div class="center" style="margin-top:6px"><button class="btn quiet" data-act="start" data-letter="${letter}" data-ess="1">Low on energy? Do the essentials (about ${minsE} min)</button></div>
-    ${doneToday.length ? '<div class="note">You already trained today. Rest days are when bone rebuilds; tomorrow or the day after is ideal.</div>' : ''}
+    ${doneToday.length ? '<div class="note">You already trained today. Recovery days are part of the program; tomorrow or the day after is ideal.</div>' : ''}
     ${w.note ? `<div class="note">${esc(w.note)}</div>` : ''}
   </div>`;
   if (!S.sessions.length) {
@@ -1380,7 +1380,7 @@ function viewPlan() {
     <div class="seg" role="group" aria-label="Schedule"><button data-act="mode" data-mode="rolling" aria-pressed="${m === 'rolling'}">Rolling</button><button data-act="mode" data-mode="pinned" aria-pressed="${m === 'pinned'}">Pinned days</button></div>
     ${m === 'pinned' ? `<div class="chips" style="margin-top:12px">${DOW.map((d, i) => `<button class="chip day" data-act="day" data-day="${i}" aria-pressed="${S.schedule.days.includes(i)}">${d.slice(0, 2)}</button>`).join('')}</div><p class="muted small" style="margin:10px 0 0">The three sessions complement one another and together cover every major movement each week, and muscle rebuilds on the days between. Three lifting days with a rest day between them is the pattern the evidence supports; give any extra days to walking or hiking.</p>` : ''}</div>`;
   html += `<div class="section"><h3>Level</h3><div class="levels">${[1, 2, 3, 4, 5].map(n => `<button data-act="level" data-level="${n}" aria-pressed="${S.level === n}"><b>${n}</b><span>${levelMinutes(n)} min</span></button>`).join('')}</div>
-    <div class="card"><p style="margin:0 0 8px"><b>Level ${S.level}.</b> ${esc(LEVELS[S.level].about)}</p><p class="muted small" style="margin:0">The app suggests the next level after six full sessions at this one, at least two weeks apart, when most sets felt easy or just right. You choose when to move. You can also move down any time; nothing is lost.</p></div></div>`;
+    <div class="card"><p style="margin:0 0 8px"><b>Level ${S.level}, about ${levelMinutes(S.level)} minutes.</b> ${esc(LEVELS[S.level].about)}</p><p class="muted small" style="margin:0">The app suggests the next level after six full sessions at this one, at least two weeks apart, when most sets felt easy or just right. You choose when to move. You can also move down any time; nothing is lost.</p></div></div>`;
   const wk = ORDER.map(L => workoutFor(L, false));
   html += `<div class="section"><h3>The three workouts</h3>` + wk.map(w => `<div class="card"><h3>Workout ${w.letter}: ${esc(w.title)}</h3><div class="muted small num" style="margin:2px 0 8px">About ${estimateMinutes(w)} minutes</div><ul class="rows">${w.list.map(e => `<li><div class="grow"><div class="t">${esc(e.ex.name)}${e.ess ? '' : ' <span class="pill">skipped in essentials</span>'}</div>${e.variant ? `<div class="s">${esc(e.variant)}</div>` : ''}</div><div class="v">${rxText(e)}</div></li>`).join('')}${w.finisher.map(e => `<li><div class="grow"><div class="t">${esc(e.ex.name)}</div>${e.variant ? `<div class="s">${esc(e.variant)}</div>` : ''}</div><div class="v">${rxText(e)}</div></li>`).join('')}</ul>${w.note ? `<p class="muted small" style="margin:10px 0 0">${esc(w.note)}</p>` : ''}</div>`).join('') + `</div>`;
   return html;
@@ -1596,7 +1596,8 @@ function renderSession() {
     } else {
       body += `<div class="inputs ${loaded ? '' : 'one'}">`;
       if (loaded) body += stepperHtml('w', toDisp(a.w), S.units, a.w ? (ex.load === 'db2' ? 'Weight, each hand' : 'Weight') : 'Weight (0 means no dumbbells)');
-      body += st.secs ? stepperHtml('reps', a.reps, 's', st.sides ? 'Seconds each side' : 'Seconds') : stepperHtml('reps', a.reps, '', st.sides ? 'Reps each side' : 'Reps');
+      const unitWord = (st.id === 'tandem_walk' || st.id === 'lateral_walk') ? 'Steps' : 'Reps';
+      body += st.secs ? stepperHtml('reps', a.reps, 's', st.sides ? 'Seconds each side' : 'Seconds') : stepperHtml('reps', a.reps, '', st.sides ? unitWord + ' each side' : unitWord);
       body += `</div>`;
       if (st.secs) body += '<div id="tblock">' + timerBlock(a.reps, true) + '</div>';
       if (isWork) body += `<div class="effort"><div class="chips">${[['easy', 'Easy'], ['right', 'Just right'], ['hard', 'Hard']].map(o => `<button class="chip" data-act="effort" data-effort="${o[0]}" aria-pressed="${a.effort === o[0]}">${o[1]}</button>`).join('')}</div><div class="cap">${effortCaption(a.effort)}</div></div>`;
@@ -1681,7 +1682,7 @@ function logSet(repsOverride) {
   a.log.push(entry);
   if (entry.w != null) { S.loads[st.id] = entry.w; }
   a.sideDone = 0;
-  if (S.suggest[st.id]) delete S.suggest[st.id];
+  if (S.suggest[st.id]) { entry.sug = S.suggest[st.id]; delete S.suggest[st.id]; }
   S.seen[st.id] = true;
   a.timer = null; a.effort = null;
   const lastSetOfStep = a.set >= st.sets;
@@ -1710,6 +1711,7 @@ function undoSet() {
   const a = S.active; if (!a || !a.log.length) return;
   const e = a.log.pop(); a.restUntil = null; a.pendingAdvance = false; $('#rest').hidden = true;
   if (e.w != null) { if (e.prev == null) delete S.loads[e.id]; else S.loads[e.id] = e.prev; }
+  if (e.sug) S.suggest[e.id] = e.sug;
   a.w = e.w; a.reps = e.secs != null ? e.secs : e.reps; a.effort = e.effort; save(); renderSession();
 }
 function advance() {
@@ -1737,7 +1739,8 @@ function computeSuggestions(log) {
     if (ex.load === 'db1' || ex.load === 'db2') {
       const each = ex.load === 'db2';
       const w = Math.min(...sets.map(s => s.w || 0));   /* progress from the load every set was completed at */
-      if (allTop && hard === 0) { const to = roundLb(w + stepUp(ex, w)); out[id] = { type: 'up', from: w, to, text: `Next time ${fmtW(to, each)}, up from ${fmtW(w, each)}` }; }
+      if (allTop && hard === 0 && w === 0) { out[id] = { type: 'harder', to: null, text: 'That was easy without weight: next time hold the lightest dumbbells you have.' }; }
+      else if (allTop && hard === 0) { const to = roundLb(w + stepUp(ex, w)); out[id] = { type: 'up', from: w, to, text: `Next time ${fmtW(to, each)}, up from ${fmtW(w, each)}` }; }
       else if (anyLow || hard >= 2) { const to = roundLb(Math.max(0, w - Math.max(stepLb(), w * 0.1))); if (to < w) out[id] = { type: 'down', from: w, to, text: `Next time ${fmtW(to, each)}, a little lighter than ${fmtW(w, each)}` }; }
     } else if ((ex.load === 'bw' || ex.load === 'band') && ex.harder && allTop && hard === 0) {
       out[id] = { type: 'harder', to: null, text: ex.harder };
@@ -1773,7 +1776,7 @@ function saveSession() {
 
 /* Onboarding */
 function onboarding() {
-  openSheet(`<h2>Hello, ${esc(S.name)}.</h2><p style="margin-top:8px">Serenity Strength is built for three things that feed each other: muscle strength, steady balance, and stronger bones. Short full-body workouts a few times a week, five levels from 10 to 60 minutes, and a log that tells you when to add weight. It is the strength side of fitness; walking, hiking and other aerobic exercise belong alongside it.</p>
+  openSheet(`<h2>Hello, ${esc(S.name)}.</h2><p style="margin-top:8px">Serenity Strength is built for three things that feed each other: muscle strength, steady balance, and stronger bones. Short workouts a few times a week, five levels from about a dozen minutes to an hour, and a log that tells you when to add weight. It is the strength side of fitness; walking, hiking and other aerobic exercise belong alongside it.</p>
     <div class="field"><label>Units</label><div class="seg"><button data-act="ob-units" data-units="lb" aria-pressed="${S.units === 'lb'}">Pounds</button><button data-act="ob-units" data-units="kg" aria-pressed="${S.units === 'kg'}">Kilograms</button></div></div>
     <div class="field"><label>Schedule</label><div class="seg"><button data-act="ob-mode" data-mode="rolling" aria-pressed="${S.schedule.mode === 'rolling'}">Whenever I train</button><button data-act="ob-mode" data-mode="pinned" aria-pressed="${S.schedule.mode === 'pinned'}">Set days</button></div>${S.schedule.mode === 'pinned' ? `<div class="chips" style="margin-top:10px">${DOW.map((d, i) => `<button class="chip day" data-act="ob-day" data-day="${i}" aria-pressed="${S.schedule.days.includes(i)}">${d.slice(0, 2)}</button>`).join('')}</div>` : ''}</div>
     <p class="muted small">Everything is stored on this phone only. You can change any of this in Settings.</p>
