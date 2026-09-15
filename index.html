@@ -1186,7 +1186,7 @@ function sanitize(o) {
   const setOk = (y) => y && typeof y === 'object' && EXERCISES[y.id];
   const cleanSet = (y) => ({ id: y.id, set: num(y.set, 1), w: y.w == null ? null : Math.max(0, num(y.w, 0)), reps: y.reps == null ? null : num(y.reps, 0), secs: y.secs == null ? null : num(y.secs, 0), effort: ['easy', 'right', 'hard'].includes(y.effort) ? y.effort : null, main: !!y.main });
   s.sessions = (Array.isArray(s.sessions) ? s.sessions : []).filter(x => x && typeof x === 'object' && DAY.test(String(x.day)) && LET.includes(x.letter) && Array.isArray(x.sets))
-    .map(x => ({ id: String(x.id || Math.random().toString(36).slice(2)), date: typeof x.date === 'string' && !isNaN(Date.parse(x.date)) ? x.date : x.day + 'T12:00:00.000Z', day: x.day, letter: x.letter, level: [1, 2, 3, 4, 5].includes(x.level) ? x.level : 1, essentials: !!x.essentials, complete: x.complete !== false, minutes: Math.max(0, num(x.minutes, 0)), sets: x.sets.filter(setOk).map(cleanSet) }));
+    .map(x => ({ id: String(x.id || Math.random().toString(36).slice(2)), date: typeof x.date === 'string' && !isNaN(Date.parse(x.date)) ? x.date : x.day + 'T12:00:00.000Z', day: x.day, letter: x.letter, level: [1, 2, 3, 4, 5].includes(x.level) ? x.level : 1, essentials: !!x.essentials, complete: x.complete !== false, completeKnown: typeof x.complete === 'boolean', minutes: Math.max(0, num(x.minutes, 0)), sets: x.sets.filter(setOk).map(cleanSet) }));
   s.sessions.sort((a, b) => a.date < b.date ? -1 : 1);
   const loads = {}; for (const k in (s.loads || {})) if (EXERCISES[k] && num(s.loads[k], -1) >= 0) loads[k] = s.loads[k]; s.loads = loads;
   const sug = {}; for (const k in (s.suggest || {})) { const v = s.suggest[k]; if (EXERCISES[k] && v && typeof v === 'object' && ['up', 'down', 'harder'].includes(v.type) && (v.to == null || num(v.to, -1) >= 0) && typeof v.text === 'string') sug[k] = { type: v.type, to: v.to == null ? null : v.to, text: v.text.slice(0, 300) }; } s.suggest = sug;
@@ -1196,14 +1196,29 @@ function sanitize(o) {
   const stepOk = (st) => st && typeof st === 'object' && ['warm', 'work', 'impact', 'balance'].includes(st.kind) && EXERCISES[st.id] && Number.isInteger(st.sets) && st.sets >= 1 && (st.reps == null || (Array.isArray(st.reps) && st.reps.length === 2 && st.reps.every(n => Number.isInteger(n))) || Number.isInteger(st.reps)) && (st.secs == null || num(st.secs, -1) >= 0);
   const activeOk = a && typeof a === 'object' && LET.includes(a.letter) && [1, 2, 3, 4, 5].includes(a.level) && Array.isArray(a.steps) && a.steps.length && a.steps.every(stepOk) && Number.isInteger(a.i) && a.i >= 0 && a.i <= a.steps.length && Number.isInteger(a.set) && a.set >= 1 && Array.isArray(a.log) && a.log.every(setOk) && num(a.started, -1) >= 0;
   if (!activeOk) s.active = null;
-  else { a.log = a.log.map(y => Object.assign(cleanSet(y), { target: y.target && typeof y.target === 'object' ? y.target : { reps: null, secs: null, sets: 1 }, prev: y.prev == null ? undefined : num(y.prev, 0) })); a.done = !!a.done; a.essentials = !!a.essentials; if (a.done) a.minutes = Math.max(1, num(a.minutes, 1)); if (a.i >= a.steps.length && !a.done) a.i = a.steps.length - 1; a.restUntil = num(a.restUntil, null); a.timer = a.timer && num(a.timer.until, null) != null ? { until: a.timer.until } : null; a.pauseTotal = Math.max(0, num(a.pauseTotal, 0)); a.pausedAt = num(a.pausedAt, null); a.sugg = a.sugg && typeof a.sugg === 'object' ? a.sugg : {}; a.accept = a.accept && typeof a.accept === 'object' ? a.accept : {}; }
+  else {
+    a.log = a.log.map(y => { const st = a.steps.find(z => z.id === y.id); const tg = st ? { reps: Array.isArray(st.reps) ? st.reps.slice() : null, secs: st.secs == null ? null : st.secs, sets: st.sets } : { reps: null, secs: null, sets: 1 }; return Object.assign(cleanSet(y), { target: tg, prev: y.prev == null ? undefined : num(y.prev, 0), sug: undefined }); });
+    a.done = !!a.done; a.essentials = !!a.essentials; a.title = String(a.title || ''); a.restNext = String(a.restNext || '');
+    if (a.done) a.minutes = Math.max(1, num(a.minutes, 1));
+    if (a.i >= a.steps.length && !a.done) a.i = a.steps.length - 1;
+    a.set = Math.min(a.set, a.steps[Math.min(a.i, a.steps.length - 1)].sets);
+    a.w = num(a.w, null); if (a.w != null) a.w = Math.max(0, a.w); a.reps = num(a.reps, null); if (a.reps != null) a.reps = Math.max(0, a.reps);
+    a.effort = ['easy', 'right', 'hard'].includes(a.effort) ? a.effort : null; a.sideDone = Math.max(0, num(a.sideDone, 0));
+    a.restUntil = num(a.restUntil, null); a.restTotal = Math.max(1000, num(a.restTotal, 60000)); a.pendingAdvance = !!a.pendingAdvance;
+    a.timer = a.timer && num(a.timer.until, null) != null ? { until: a.timer.until } : null;
+    a.pauseTotal = Math.max(0, num(a.pauseTotal, 0)); a.pausedAt = num(a.pausedAt, null); a.lastSeen = num(a.lastSeen, null); a.hiddenAt = null; a.lastRestEnd = num(a.lastRestEnd, null);
+    const sg = {}; for (const k in (a.sugg && typeof a.sugg === 'object' ? a.sugg : {})) { const v = a.sugg[k]; if (EXERCISES[k] && v && typeof v === 'object' && ['up', 'down', 'harder'].includes(v.type) && (v.to == null || num(v.to, -1) >= 0) && typeof v.text === 'string') sg[k] = { type: v.type, from: v.from == null ? null : num(v.from, 0), to: v.to == null ? null : v.to, text: v.text.slice(0, 300) }; } a.sugg = sg;
+    const ac = {}; for (const k in (a.accept && typeof a.accept === 'object' ? a.accept : {})) if (sg[k]) ac[k] = !!a.accept[k]; a.accept = ac;
+  }
+  /* records saved before completion was tracked: derive it from the workout definition */
+  s.sessions.forEach(x => { if (x.completeKnown === false) { const w = buildWorkout(x.level, x.letter, 'unknown', x.essentials, false); x.complete = w.list.every(e => x.sets.filter(y => y.id === e.id).length >= e.sets); } delete x.completeKnown; });
   return s;
 }
 function load() {
   try { const raw = localStorage.getItem(KEY); if (raw) return sanitize(JSON.parse(raw)); } catch (e) { /* ignore */ }
   return fresh();
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save. Storage may be full or blocked.'); } }
+function save() { if (S.active && !S.active.done && !S.active.pausedAt) S.active.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save. Storage may be full or blocked.'); } }
 
 /* Utilities */
 const $ = (sel, root) => (root || document).querySelector(sel);
@@ -1240,9 +1255,22 @@ function unmountFigs(root) {
   figs = figs.filter(e => { if (!root || root.contains(e.box)) { e.f.destroy(); return false; } return true; });
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { figs.forEach(e => e.f.stop()); return; }
+  const a = S.active, open = a && !a.done && !$('#session').hidden;
+  if (document.hidden) {
+    figs.forEach(e => e.f.stop());
+    if (open) { a.hiddenAt = Date.now(); if (a.timer) a.timer = null; save(); }
+    return;
+  }
   figs.forEach(e => { if (e.auto) e.f.play(); });
-  if (S.active && !$('#session').hidden) renderSession();
+  if (open && a.hiddenAt) {
+    const now = Date.now(), from = a.hiddenAt; a.hiddenAt = null;
+    /* time away counts as a pause, except the part of a rest timer that was already running */
+    const deadline = a.restUntil || a.lastRestEnd; a.lastRestEnd = null;
+    const restEnd = deadline && deadline > from ? Math.min(deadline, now) : from;
+    a.pauseTotal = (a.pauseTotal || 0) + Math.max(0, now - restEnd);
+    save();
+  }
+  if (open) renderSession();
 });
 
 /* Program helpers */
@@ -1398,7 +1426,7 @@ function proteinLine() {
 }
 const CARDS = [
   { id: 'why', title: 'Why heavy, and why impact', body: `<p>Bone is living tissue that adapts to the loads it meets. After menopause the rate of bone loss speeds up for several years, most steeply around the final period, which is why the timing of a program like this matters.</p><p>Two kinds of loading have the best evidence. Progressive resistance training with heavy weights sends compressive force through the hip and spine; in the LIFTMOR trial, eight months of twice-weekly, supervised 30-minute sessions of barbell deadlifts, squats and overhead presses at over 85 percent of maximum raised spine density by about 3 percent in postmenopausal women with low bone mass, with no serious injuries. Brief impact, such as heel drops, hops and drop landings, gives the jolt that steady exercise like walking or swimming does not. The Australian position statement recommends both, plus balance training, and advises against loaded spinal flexion (sit-ups with weight, toe-touch stretches under load).</p><p>The five levels here start light and build toward the LIFTMOR scheme of five sets of five on the main lift, with the impact ladder gated by your bone status. This is a dumbbell adaptation for home use; the trial itself used barbells with a supervisor present, and the adaptation has not been tested in a trial of its own, which is one reason a coach's eyes on your form in the early sessions are worth having.</p>`, refs: ['liftmor', 'essa', 'swan'] },
-  { id: 'effort', title: 'How the effort scale works', body: `<p>After each set you tap one of three words.</p><ul class="plain"><li><b>Easy.</b> You could have done three or more extra reps.</li><li><b>Just right.</b> One or two reps were left. This is where most sets should land.</li><li><b>Hard.</b> Nothing left, or your form slipped on the last rep.</li></ul><p>When every set of an exercise hits the top of its rep range without a Hard, the app suggests more weight next time: one equipment step while the load is light, growing to 5 lb per dumbbell on lower-body lifts and 2.5 lb on upper-body lifts as loads rise, which keeps each step near the 2 to 10 percent the ACSM describes. If reps fall short or two sets are Hard, it suggests a step down. You always decide; the suggestion is the default in the weight box, and you can change it.</p><p>The rep ranges are wide on purpose. Position statements for older adults recommend beginning with lighter loads and 10 to 15 reps, then progressing over months toward heavier loads for fewer reps, which is what the levels do; the Australian guidance suggests new lifters ramp up over their first few sessions rather than starting heavy, which is why the app says to begin with a weight you could lift about 15 times.</p>`, refs: ['nsca', 'acsm', 'essa'] },
+  { id: 'effort', title: 'How the effort scale works', body: `<p>After each set you tap one of three words.</p><ul class="plain"><li><b>Easy.</b> You could have done three or more extra reps.</li><li><b>Just right.</b> One or two reps were left. This is where most sets should land.</li><li><b>Hard.</b> Nothing left, or your form slipped on the last rep.</li></ul><p>When every set of an exercise hits the top of its rep range without a Hard, the app suggests more weight next time: one equipment step while the load is light (a large jump in percentage terms, which fixed dumbbell steps make unavoidable), growing to 5 lb per dumbbell on lower-body lifts and 2.5 lb on upper-body lifts once loads are moderate, where each step lands near the 2 to 10 percent the ACSM describes. If reps fall short or two sets are Hard, it suggests a step down. You always decide; the suggestion is the default in the weight box, and you can change it.</p><p>The rep ranges are wide on purpose. Position statements for older adults recommend beginning with lighter loads and 10 to 15 reps, then progressing over months toward heavier loads for fewer reps, which is what the levels do; the Australian guidance suggests new lifters ramp up over their first few sessions rather than starting heavy, which is why the app says to begin with a weight you could lift about 15 times.</p>`, refs: ['nsca', 'acsm', 'essa'] },
   { id: 'bone', title: 'Bone status and the impact ladder', body: `<p>The impact work climbs a ladder: heel drops, then two-foot hops, then drop landings from a low step. Where you can climb depends on the bone status set in Settings.</p><ul class="plain"><li><b>Unknown</b> (the default with no DEXA scan): heel drops from Level 1, hops from Level 3. Drop landings stay locked.</li><li><b>Normal</b> (T-score of minus 1.0 or higher): the full ladder; drop landings from Level 4.</li><li><b>Osteopenia</b> (T-score between minus 1.0 and minus 2.5): same as unknown. The LIFTMOR participants had osteopenia or osteoporosis and did drop landings safely, but under supervision.</li><li><b>Osteoporosis</b> (T-score of minus 2.5 or lower, or diagnosed from a fragility fracture): heel drops only, and a word with your clinician before hops. The UK consensus statement advises against landing from a height with osteoporosis.</li></ul><p>Set this to what your clinician tells you, not to a guess. A diagnosis comes from a clinician, usually from a DEXA scan and sometimes from a fracture history; the scan also gives a baseline, so that a scan a year or two later can show what the training did. A home bioimpedance scale cannot measure bone density; its bone-mass number is an estimate derived from lean mass. There is also a separate switch in Settings that keeps impact work at heel drops regardless of bone status, for anyone with a fragility fracture, a fall in the past year, or a clinician's advice against jumping. Ask your doctor whether a baseline scan makes sense for you. Low body weight is itself a fracture risk factor, and some medications and conditions affect bone, so it is worth telling your doctor that you are training for bone density.</p>`, refs: ['essa', 'liftmor', 'ukcons', 'delaet'] },
   { id: 'fuel', title: 'Eating for bone and muscle on a vegan diet', body: `<p>Muscle and bone are built from what you eat. On a fully plant-based diet, four things need deliberate attention: protein, calcium, vitamin D, and vitamin B12.</p><p><b>Protein.</b> Expert groups recommend 1.2 to 1.6 g per kilogram of body weight a day for adults who strength train. Plant proteins carry a little less leucine, the amino acid that switches on muscle building, and are digested slightly less completely, so on a vegan diet aim at the top of that range and make each portion larger, at least 30 g of protein at a time, adding a fourth meal or a shake when the daily total calls for it. In a 12-week trial, vegans eating 1.6 g/kg from plant sources gained the same muscle and strength from lifting as omnivores on a matched diet (the participants were young men, but it is the most direct test so far). The workhorses are tofu, tempeh, edamame and soy milk; lentils, chickpeas and beans; seitan; and a pea or soy protein powder when a meal falls short.</p><p class="proteinline">${proteinLine()}</p><p><b>Calcium.</b> Women over 50 need 1,200 mg a day. In the EPIC-Oxford study, vegans had more fractures, hip fractures especially, than meat eaters, and the gap was partly explained by lower body weight and lower calcium and protein intake, which is exactly why this card exists. Reliable sources: calcium-set tofu (the label lists calcium sulfate), fortified plant milks and juices (shake the carton, the calcium settles), tempeh, kale, bok choy, collard greens and broccoli, tahini, almonds, and dried figs. Spinach does not count; its calcium is bound by oxalate. There is also good news specific to lifting: in a study comparing vegans with omnivores, the vegans who did regular resistance training had bone microstructure similar to the omnivores, while the vegans who did not train did not.</p><p><b>Vitamin D and B12.</b> Vitamin D, 600 IU a day from age 51 to 70, comes mainly from sun and supplements; vegan D3 made from lichen is widely available, and a blood test shows whether you need it. Vitamin B12 is not optional on a vegan diet: a daily supplement, or fortified foods every day.</p><p><b>Optional: creatine.</b> Vegans start with lower muscle creatine stores and respond well to creatine monohydrate, 3 to 5 g a day (it is made synthetically, not from animals). It reliably adds a little strength and lean mass to resistance training in older adults. Its effect on bone density is not settled: a 12-month trial in postmenopausal women slowed hip bone loss, and a 2-year trial did not raise density. Skip it, or ask your doctor first, if kidney disease is in the picture.</p>`, refs: ['protage', 'morton', 'paddon', 'vanvliet', 'hevia', 'tong', 'wakol', 'nih', 'melina', 'kaviani', 'chilibeck17', 'chilibeck15', 'chilibeck23'] },
   { id: 'kit', title: 'Equipment', body: `<ul class="plain"><li><b>Adjustable dumbbells</b>, a pair that goes to at least 50 lb each. This is the one non-negotiable item: by Level 4 the deadlift and squat need real weight. Fixed dumbbells in 5 lb steps from 5 to 25 lb also work at the lower levels.</li><li><b>Loop resistance bands</b>, a set from light to heavy, for rows, pull-aparts, lateral walks and the Pallof press.</li><li><b>A flat bench</b> for the bench press, hip thrust, one-arm row and rear-foot-elevated split squat.</li><li><b>A sturdy step</b> 6 to 8 inches high (a bottom stair works) for step-ups and, later, drop landings.</li><li><b>A mat</b> for the floor work.</li><li>Later: <b>a weighted vest</b> at 5 to 10 percent of body weight for step-ups and carries. In one five-year trial, vest-and-jumping exercise maintained hip bone density in postmenopausal women while the control group lost bone.</li></ul>`, refs: ['snow', 'essa'] },
@@ -1516,7 +1544,7 @@ function importText(text) {
     if (!o || o.v !== 1 || !Array.isArray(o.sessions)) throw new Error('bad');
     if (!confirm(`Replace the data on this device with this backup (${o.sessions.length} sessions)?`)) return false;
     const keep = S, cand = sanitize(o);
-    try { S = cand; viewToday(); viewPlan(); viewLearn(); viewProgress(); viewSettings(); }
+    try { S = cand; viewToday(); viewPlan(); viewLearn(); viewProgress(); viewSettings(); if (S.active) { S.active.done ? summaryView() : sessionHtml(); } }
     catch (e) { S = keep; toast('That backup could not be read safely. Nothing was changed.'); return false; }
     save(); closeSheet(); render(); toast('Backup imported'); return true;
   } catch (e) { toast('That is not a Serenity Strength backup.'); return false; }
@@ -1549,13 +1577,17 @@ function startSession(letter, essentials) {
 function openSession() {
   $('#session').hidden = false; document.body.style.overflow = 'hidden'; setInert(true); requestWake();
   const a = S.active;
-  if (a && a.pausedAt) { a.pauseTotal = (a.pauseTotal || 0) + Math.max(0, Date.now() - a.pausedAt); a.pausedAt = null; save(); }
+  if (a && !a.done) {
+    if (a.pausedAt) { a.pauseTotal = (a.pauseTotal || 0) + Math.max(0, Date.now() - a.pausedAt); a.pausedAt = null; }
+    else if (a.lastSeen && Date.now() - a.lastSeen > 5 * 60000) { a.pauseTotal = (a.pauseTotal || 0) + (Date.now() - a.lastSeen); a.timer = null; }
+    save();
+  }
   if (a && !a.done && a.restUntil && a.restUntil <= Date.now()) { afterRest(); return; }
   renderSession();
   if (a && !a.done && a.restUntil) showRest();
 }
 function closeSession() {
-  const a = S.active; if (a && !a.done && !a.pausedAt) { a.pausedAt = Date.now(); save(); }
+  const a = S.active; if (a && !a.done && !a.pausedAt) { a.pausedAt = Date.now(); a.timer = null; save(); }
   unmountFigs($('#session')); $('#session').hidden = true; $('#session').innerHTML = ''; $('#rest').hidden = true; document.body.style.overflow = ''; setInert(false); releaseWake(); stopTick(); render();
 }
 function setInert(on) { ['#screen', '#tabs'].forEach(sel => { const el = $(sel); if (el) { if (on) el.setAttribute('inert', ''); else el.removeAttribute('inert'); } }); }
@@ -1569,8 +1601,17 @@ function renderSession() {
   const a = S.active; if (!a) return;
   const root = $('#session');
   unmountFigs(root);
-  if (a.done) { root.innerHTML = summaryView(); return; }
+  let html;
+  try { html = a.done ? summaryView() : sessionHtml(); }
+  catch (e) { S.active = null; save(); closeSession(); toast('The saved workout could not be restored, so it was discarded.'); return; }
+  root.innerHTML = html;
+  mountFigs(root);
+  if ($('#tval', root)) startTick();
+}
+function sessionHtml() {
+  const a = S.active;
   const st = curStep(); const ex = EXERCISES[st.id];
+  if (a.w != null) a.w = roundLb(a.w);
   const total = a.steps.length;
   const top = `<div class="s-top"><div class="prog num">Workout ${a.letter}${a.essentials ? ', essentials' : ''}, ${a.i + 1} of ${total}</div><button class="x" data-act="pause" aria-label="Pause and close">\u2715</button></div>`;
   let body = '';
@@ -1583,6 +1624,7 @@ function renderSession() {
     const isWork = st.kind === 'work';
     const loaded = isWork && (ex.load === 'db1' || ex.load === 'db2');
     if (a.w == null && loaded) { const sug = S.suggest[st.id]; a.w = roundLb(sug && sug.to != null ? sug.to : loadFor(st.id)); }
+    if (a.reps != null) a.reps = Math.max(0, Math.round(a.reps));
     if (a.reps == null) { const lr = lastReps(st.id); a.reps = st.secs ? st.secs : (lr && lr.reps ? Math.min(Math.max(lr.reps, st.reps[0]), st.reps[1]) : st.reps[1]); }
     const stage = st.kind === 'impact' ? 'Impact' : st.kind === 'balance' ? 'Balance' : (st.main ? 'Main lift' : 'Strength');
     body += `<div class="s-stage">${stage}</div><h2 class="s-name">${esc(ex.name)}</h2><div class="s-target">${targetText(st)}${st.variant ? '. ' + esc(st.variant) : ''}</div>
@@ -1605,14 +1647,12 @@ function renderSession() {
     }
   }
   body += `<div class="center" style="margin-top:2px"><button class="btn quiet" data-act="endearly" style="color:var(--muted)">End the workout here</button></div>`;
-  root.innerHTML = `<div class="s-in">${top}${body}${st.kind === 'warm' && !ex.faults.length ? '' : howto}</div>`;
-  mountFigs(root);
-  const tb = $('#tval', root); if (tb) startTick();
+  return `<div class="s-in">${top}${body}${st.kind === 'warm' && !ex.faults.length ? '' : howto}</div>`;
 }
 function effortCaption(e) { return e === 'easy' ? 'Three or more reps were left.' : e === 'right' ? 'One or two reps were left.' : e === 'hard' ? 'Nothing left, or form slipped.' : 'How did that set feel?'; }
 function stepperHtml(key, val, unit, label) {
   const what = key === 'w' ? 'weight' : (unit === 's' ? 'seconds' : 'reps');
-  return `<div><div class="stepper wide"><button data-act="dec" data-key="${key}" aria-label="Decrease ${what}">\u2212</button><div class="val"><span class="num" data-val="${key}">${val}</span>${unit ? `<small>${unit}</small>` : ''}</div><button data-act="inc" data-key="${key}" aria-label="Increase ${what}">+</button></div><div class="inline-cap">${label}</div></div>`;
+  return `<div><div class="stepper wide"><button data-act="dec" data-key="${key}" aria-label="Decrease ${what}">\u2212</button><div class="val"><span class="num" data-val="${key}">${esc(val)}</span>${unit ? `<small>${unit}</small>` : ''}</div><button data-act="inc" data-key="${key}" aria-label="Increase ${what}">+</button></div><div class="inline-cap">${label}</div></div>`;
 }
 function timerBlock(secs, small) {
   const a = S.active; const t = a.timer; const st = a.steps[a.i];
@@ -1677,7 +1717,8 @@ function beep() {
 
 function logSet(repsOverride) {
   const a = S.active, st = curStep(), ex = EXERCISES[st.id];
-  const entry = { id: st.id, set: a.set, w: (ex.load === 'db1' || ex.load === 'db2') && st.kind === 'work' ? roundLb(a.w || 0) : null, effort: st.kind === 'work' ? a.effort : null, main: !!st.main, target: { reps: st.reps, secs: st.secs, sets: st.sets }, prev: S.loads[st.id] };
+  if (a.restUntil) return;
+  const entry = { id: st.id, set: a.set, w: (ex.load === 'db1' || ex.load === 'db2') && st.kind === 'work' ? (a.w || 0) : null, effort: st.kind === 'work' ? a.effort : null, main: !!st.main, target: { reps: st.reps, secs: st.secs, sets: st.sets }, prev: S.loads[st.id] };
   if (st.secs) entry.secs = a.reps; else entry.reps = repsOverride != null ? repsOverride : a.reps;
   a.log.push(entry);
   if (entry.w != null) { S.loads[st.id] = entry.w; }
@@ -1695,7 +1736,7 @@ function logSet(repsOverride) {
 function showRest() {
   const a = S.active; const r = $('#rest'); const C = 2 * Math.PI * 100;
   figs.forEach(e => { if ($('#session').contains(e.box)) e.f.stop(); });
-  r.innerHTML = `<div><div class="ring"><svg viewBox="0 0 220 220"><circle class="track" cx="110" cy="110" r="100"/><circle class="arc" cx="110" cy="110" r="100" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="0"/></svg><div class="t num">${Math.ceil((a.restUntil - Date.now()) / 1000)}</div></div><div class="next">Rest. Next: ${esc(a.restNext)}</div><div class="row"><button class="btn" data-act="rest30">+30 s</button><button class="btn primary" data-act="restskip">Done resting</button></div><div style="margin-top:16px"><button class="btn quiet" data-act="restundo" style="color:var(--hero-muted)">Undo that set</button></div></div>`;
+  r.innerHTML = `<div><div class="ring"><svg viewBox="0 0 220 220"><circle class="track" cx="110" cy="110" r="100"/><circle class="arc" cx="110" cy="110" r="100" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="0"/></svg><div class="t num">${Math.ceil((a.restUntil - Date.now()) / 1000)}</div></div><div class="next">Rest. Next: ${esc(a.restNext)}</div><div class="row"><button class="btn" data-act="rest30">+30 s</button><button class="btn primary" data-act="restskip">Done resting</button></div><div class="row" style="margin-top:16px;gap:4px"><button class="btn quiet" data-act="restundo" style="color:var(--hero-muted)">Undo that set</button><button class="btn quiet" data-act="pause" style="color:var(--hero-muted)">Pause</button><button class="btn quiet" data-act="endearly" style="color:var(--hero-muted)">End here</button></div></div>`;
   r.hidden = false; startTick();
 }
 function endRest() {
@@ -1704,7 +1745,7 @@ function endRest() {
   figs.forEach(e => { if (e.auto && $('#session').contains(e.box)) e.f.play(); });
 }
 function afterRest() {
-  const a = S.active; a.restUntil = null;
+  const a = S.active; a.lastRestEnd = Math.min(Date.now(), a.restUntil || Date.now()); a.restUntil = null;
   if (a.pendingAdvance) { a.pendingAdvance = false; advance(); } else { a.set++; save(); renderSession(); }
 }
 function undoSet() {
@@ -1732,7 +1773,7 @@ function computeSuggestions(log) {
   const out = {};
   for (const id in byEx) {
     const ex = EXERCISES[id], sets = byEx[id], tg = sets[0].target;
-    if (!tg || sets[0].effort == null) continue;
+    if (!tg || sets[0].effort == null || (tg.secs == null && !(Array.isArray(tg.reps) && tg.reps.length === 2))) continue;
     const hard = sets.filter(s => s.effort === 'hard').length;
     const allTop = sets.length >= tg.sets && sets.every(s => tg.secs ? s.secs >= tg.secs : s.reps >= tg.reps[1]);
     const anyLow = sets.some(s => tg.secs ? s.secs < tg.secs * 0.75 : s.reps < tg.reps[0]);
@@ -1788,6 +1829,7 @@ document.addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-act], [data-tab]'); if (!b) return;
   if (b.dataset.tab && !b.dataset.act) { tab = b.dataset.tab; render(); return; }
   const act = b.dataset.act, a = S.active;
+  if (a && a.restUntil && !a.done && ['logset', 'effort', 'skipex', 'next', 'inc', 'dec', 'tstart', 'tstop'].includes(act)) return;
   if (['start', 'resume', 'tstart', 'tstop', 'logset', 'restskip', 'rest30', 'next', 'effort', 'inc', 'dec'].includes(act)) initAudio();
   switch (act) {
     case 'tab': tab = b.dataset.tab; render(); break;
@@ -1863,7 +1905,7 @@ try {
 if (!S.onboarded && REDUCED) { S.motion = false; save(); }
 render();
 if (!S.onboarded) onboarding();
-if (S.active) { if (S.active.done) { openSession(); } }
+if (S.active && S.active.done) { try { openSession(); } catch (e) { S.active = null; save(); closeSession(); } }
 
 </script>
 </body>
