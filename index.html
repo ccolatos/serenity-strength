@@ -65,6 +65,7 @@ a { color: var(--accent); }
 .week .dot.plan { border-style: dashed; color: var(--muted); }
 .week .day.today .dot { border-color: var(--ink); border-width: 2px; }
 .week .day.today { color: var(--ink); font-weight: 600; }
+.milestone { font-family: var(--serif); font-size: 20px; line-height: 1.35; margin: -6px 0 20px; color: var(--ink); }
 
 /* Hero card */
 .hero { background: var(--hero); color: var(--hero-ink); border-radius: 22px; padding: 22px 22px 18px; margin: 0 0 22px; position: relative; overflow: hidden; }
@@ -1165,7 +1166,7 @@ const LB_PER_KG = 2.20462;
 
 function fresh() {
   return { v: 1, name: DEFAULT_NAME, units: 'lb', step: 2.5, weight: null, bone: 'unknown', level: 1, levelStart: todayKey(),
-    schedule: { mode: 'rolling', days: [1, 3, 5] }, loads: {}, suggest: {}, sessions: [], active: null, snooze: null, onboarded: false, sound: true, motion: true, caution: false, seen: {} };
+    schedule: { mode: 'rolling', days: [1, 3, 5] }, loads: {}, suggest: {}, sessions: [], active: null, snooze: null, onboarded: false, sound: true, motion: true, caution: false, seen: {}, milestones: {}, milestoneDay: null };
 }
 let S = load();
 function num(v, d) { return (typeof v === 'number' && isFinite(v)) ? v : d; }
@@ -1191,6 +1192,8 @@ function sanitize(o) {
   const loads = {}; for (const k in (s.loads || {})) if (EXERCISES[k] && num(s.loads[k], -1) >= 0) loads[k] = s.loads[k]; s.loads = loads;
   const sug = {}; for (const k in (s.suggest || {})) { const v = s.suggest[k]; if (EXERCISES[k] && v && typeof v === 'object' && ['up', 'down', 'harder'].includes(v.type) && (v.to == null || num(v.to, -1) >= 0) && typeof v.text === 'string') sug[k] = { type: v.type, to: v.to == null ? null : v.to, text: v.text.slice(0, 300) }; } s.suggest = sug;
   const seen = {}; for (const k in (s.seen || {})) if (EXERCISES[k] && s.seen[k]) seen[k] = true; s.seen = seen;
+  const ms = {}; for (const k in (s.milestones && typeof s.milestones === 'object' ? s.milestones : {})) if (typeof k === 'string' && k.length < 60 && DAY.test(String(s.milestones[k]))) ms[k] = s.milestones[k]; s.milestones = ms;
+  const md = s.milestoneDay; s.milestoneDay = md && typeof md === 'object' && DAY.test(String(md.day)) && typeof md.key === 'string' && typeof md.text === 'string' ? { day: md.day, key: md.key.slice(0, 60), text: md.text.slice(0, 200) } : null;
   s.snooze = s.snooze && [1, 2, 3, 4, 5].includes(s.snooze.level) && Number.isInteger(s.snooze.until) ? { level: s.snooze.level, until: s.snooze.until } : null;
   const a = s.active;
   const stepOk = (st) => st && typeof st === 'object' && ['warm', 'work', 'impact', 'balance'].includes(st.kind) && EXERCISES[st.id] && Number.isInteger(st.sets) && st.sets >= 1 && (st.reps == null || (Array.isArray(st.reps) && st.reps.length === 2 && st.reps.every(n => Number.isInteger(n))) || Number.isInteger(st.reps)) && (st.secs == null || num(st.secs, -1) >= 0);
@@ -1206,7 +1209,7 @@ function sanitize(o) {
     a.effort = ['easy', 'right', 'hard'].includes(a.effort) ? a.effort : null; a.sideDone = Math.max(0, num(a.sideDone, 0));
     a.restUntil = num(a.restUntil, null); a.restTotal = Math.max(1000, num(a.restTotal, 60000)); a.pendingAdvance = !!a.pendingAdvance;
     a.timer = a.timer && num(a.timer.until, null) != null ? { until: a.timer.until } : null;
-    a.pauseTotal = Math.max(0, num(a.pauseTotal, 0)); a.pausedAt = num(a.pausedAt, null); a.lastSeen = num(a.lastSeen, null); a.hiddenAt = null; a.lastRestEnd = num(a.lastRestEnd, null);
+    a.pauseTotal = Math.max(0, num(a.pauseTotal, 0)); a.pausedAt = num(a.pausedAt, null); a.lastSeen = num(a.lastSeen, null); a.hiddenAt = num(a.hiddenAt, null); a.lastRestEnd = num(a.lastRestEnd, null);
     const sg = {}; for (const k in (a.sugg && typeof a.sugg === 'object' ? a.sugg : {})) { const v = a.sugg[k]; if (EXERCISES[k] && v && typeof v === 'object' && ['up', 'down', 'harder'].includes(v.type) && (v.to == null || num(v.to, -1) >= 0) && typeof v.text === 'string') sg[k] = { type: v.type, from: v.from == null ? null : num(v.from, 0), to: v.to == null ? null : v.to, text: v.text.slice(0, 300) }; } a.sugg = sg;
     const ac = {}; for (const k in (a.accept && typeof a.accept === 'object' ? a.accept : {})) if (sg[k]) ac[k] = !!a.accept[k]; a.accept = ac;
   }
@@ -1218,7 +1221,18 @@ function load() {
   try { const raw = localStorage.getItem(KEY); if (raw) return sanitize(JSON.parse(raw)); } catch (e) { /* ignore */ }
   return fresh();
 }
-function save() { if (S.active && !S.active.done && !S.active.pausedAt) S.active.lastSeen = Date.now(); try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save. Storage may be full or blocked.'); } }
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('Could not save. Storage may be full or blocked.'); } }
+/* Activity stamp: only while the workout screen is showing on a visible page. Used to reconcile time away after a reload. */
+function touch() { const a = S.active, sess = document.getElementById('session'); if (a && !a.done && !a.pausedAt && !a.hiddenAt && !document.hidden && sess && !sess.hidden) a.lastSeen = Date.now(); }
+/* Time away (page hidden, app closed, phone locked) is not workout time, except a rest timer that was already running. */
+function reconcileAway() {
+  const a = S.active; if (!a || a.done || !a.hiddenAt) return;
+  const now = Date.now(), from = a.hiddenAt; a.hiddenAt = null;
+  const deadline = a.restUntil || a.lastRestEnd; a.lastRestEnd = null;
+  const restEnd = deadline && deadline > from ? Math.min(deadline, now) : from;
+  a.pauseTotal = (a.pauseTotal || 0) + Math.max(0, now - restEnd);
+  a.timer = null;
+}
 
 /* Utilities */
 const $ = (sel, root) => (root || document).querySelector(sel);
@@ -1258,18 +1272,11 @@ document.addEventListener('visibilitychange', () => {
   const a = S.active, open = a && !a.done && !$('#session').hidden;
   if (document.hidden) {
     figs.forEach(e => e.f.stop());
-    if (open) { a.hiddenAt = Date.now(); if (a.timer) a.timer = null; save(); }
+    if (open) { touch(); a.hiddenAt = Date.now(); if (a.timer) a.timer = null; save(); }
     return;
   }
   figs.forEach(e => { if (e.auto) e.f.play(); });
-  if (open && a.hiddenAt) {
-    const now = Date.now(), from = a.hiddenAt; a.hiddenAt = null;
-    /* time away counts as a pause, except the part of a rest timer that was already running */
-    const deadline = a.restUntil || a.lastRestEnd; a.lastRestEnd = null;
-    const restEnd = deadline && deadline > from ? Math.min(deadline, now) : from;
-    a.pauseTotal = (a.pauseTotal || 0) + Math.max(0, now - restEnd);
-    save();
-  }
+  if (open && a.hiddenAt) { reconcileAway(); touch(); save(); }
   if (open) renderSession();
 });
 
@@ -1311,6 +1318,7 @@ function render() {
   renderTabs();
   const s = $('#screen');
   s.innerHTML = ({ today: viewToday, plan: viewPlan, learn: viewLearn, progress: viewProgress, settings: viewSettings })[tab]();
+  if (tab === 'today') markMilestone(milestone());
   mountFigs(s);
   window.scrollTo(0, 0);
 }
@@ -1337,6 +1345,7 @@ function viewToday() {
   const tk = todayKey(); const doneToday = sessionsOn(tk);
   let html = `<h1>${greeting()}, ${esc(S.name)}.</h1><p class="muted" style="margin-top:4px">Level ${S.level}. ${S.sessions.length ? countThisWeek() + ' of ' + weekTarget() + ' sessions this week.' : 'Three sessions a week is the aim.'}</p>`;
   html += weekStrip();
+  const ms = milestone(); if (ms) html += `<p class="milestone">${esc(ms.text)}</p>`;
   if (S.active) {
     const a = S.active;
     html += `<div class="card tint" style="margin-bottom:14px"><h3>Workout ${a.letter} is in progress</h3><p style="margin:6px 0 12px">Started ${Math.max(1, Math.round((Date.now() - a.started) / 60000))} min ago. Pick up where you left off, or discard it.</p><div class="row"><button class="btn primary" data-act="resume">Resume</button><button class="btn outline" data-act="discard">Discard</button></div></div>`;
@@ -1382,6 +1391,38 @@ function summaryRows(sess) {
   }).join('') + '</ul>';
 }
 function effortMark(sets) { const h = sets.filter(x => x.effort === 'hard').length, e = sets.filter(x => x.effort === 'easy').length; return h >= 2 ? 'hard' : e === sets.length && sets.length ? 'easy' : ''; }
+
+/* Milestones: one quiet line, computed from her own log, shown only on the day it is earned, one per day */
+function milestone() {
+  try {
+    const tk = todayKey();
+    if (S.milestoneDay && S.milestoneDay.day === tk) return { key: S.milestoneDay.key, text: S.milestoneDay.text };
+    const n = S.sessions.length; if (!n) return null;
+    const list = [];
+    if (n === 1 && S.sessions[0].day === tk) list.push({ key: 'first', text: 'Your first session is in the book.' });
+    for (let y = 1; y <= 30; y++) { const d = parseKey(S.sessions[0].day); d.setFullYear(d.getFullYear() + y); if (todayKey(d) === tk && S.sessions[0].day !== tk) list.push({ key: 'year-' + y, text: y === 1 ? 'One year today.' : y + ' years today.' }); }
+    const words = { 10: 'Ten sessions. This is a habit now.', 25: 'Twenty-five sessions.', 50: 'Fifty sessions. This is real strength work.', 100: 'One hundred sessions.', 200: 'Two hundred sessions.', 365: 'Three hundred sixty-five sessions.' };
+    if (words[n] && S.sessions[n - 1].day === tk) list.push({ key: 'sessions-' + n, text: words[n] });
+    const firstLoad = {}, doubledOn = {};
+    S.sessions.forEach(x => x.sets.forEach(y => { if (y.w > 0) { if (firstLoad[y.id] == null) firstLoad[y.id] = y.w; else if (doubledOn[y.id] == null && y.w >= firstLoad[y.id] * 2) doubledOn[y.id] = x.day; } }));
+    Object.keys(doubledOn).forEach(id => { if (EXERCISES[id] && doubledOn[id] === tk) { const last = Math.max(...S.sessions.filter(x => x.day === tk).flatMap(x => x.sets).filter(y => y.id === id && y.w > 0).map(y => y.w)); list.push({ key: 'double-' + id, text: `Your ${EXERCISES[id].name.toLowerCase()} has doubled since you began: ${fmtW(firstLoad[id], EXERCISES[id].load === 'db2')} to ${fmtW(last, EXERCISES[id].load === 'db2')}.` }); } });
+    const ws = weekStart(new Date()); const wsk = todayKey(ws);
+    const thisWeek = S.sessions.filter(x => x.day >= wsk); const target = weekTarget();
+    if (thisWeek.length >= target && thisWeek[target - 1].day === tk) {
+      let run = 1;
+      for (let i = 1; i <= 12; i++) { const a = todayKey(addDays(ws, -7 * i)), b = todayKey(addDays(ws, -7 * i + 6)); if (S.sessions.filter(x => x.day >= a && x.day <= b).length >= target) run++; else break; }
+      if (run >= 12) list.push({ key: 'weeks-12', text: 'Twelve weeks in a row at your target.' });
+      else if (run >= 4) list.push({ key: 'weeks-4', text: 'Four weeks in a row at your target. Bone is built exactly this way.' });
+    }
+    return list.find(x => !S.milestones[x.key]) || null;
+  } catch (e) { return null; }
+}
+function markMilestone(m) {
+  try {
+    const tk = todayKey(); if (!m || (S.milestoneDay && S.milestoneDay.day === tk)) return;
+    S.milestones[m.key] = tk; S.milestoneDay = { day: tk, key: m.key, text: m.text }; save();
+  } catch (e) { }
+}
 
 /* Level rules */
 function fullAtLevel() { return S.sessions.filter(s => s.level === S.level && !s.essentials && s.complete !== false && s.day >= S.levelStart); }
@@ -1579,8 +1620,9 @@ function openSession() {
   const a = S.active;
   if (a && !a.done) {
     if (a.pausedAt) { a.pauseTotal = (a.pauseTotal || 0) + Math.max(0, Date.now() - a.pausedAt); a.pausedAt = null; }
+    else if (a.hiddenAt) { reconcileAway(); }
     else if (a.lastSeen && Date.now() - a.lastSeen > 5 * 60000) { a.pauseTotal = (a.pauseTotal || 0) + (Date.now() - a.lastSeen); a.timer = null; }
-    save();
+    touch(); save();
   }
   if (a && !a.done && a.restUntil && a.restUntil <= Date.now()) { afterRest(); return; }
   renderSession();
@@ -1599,6 +1641,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S.
 function curStep() { const a = S.active; return a ? a.steps[a.i] : null; }
 function renderSession() {
   const a = S.active; if (!a) return;
+  touch();
   const root = $('#session');
   unmountFigs(root);
   let html;
@@ -1669,6 +1712,7 @@ function startTick() { stopTick(); tickI = setInterval(tick, 250); tick(); }
 function stopTick() { if (tickI) clearInterval(tickI); tickI = null; }
 function tick() {
   const a = S.active; if (!a) { stopTick(); return; }
+  if (!a.done && !a.pausedAt && !a.hiddenAt && !document.hidden && Date.now() - (a.lastSeen || 0) > 30000) { touch(); save(); }
   // rest overlay
   if (a.restUntil) {
     const left = Math.max(0, a.restUntil - Date.now());
@@ -1718,6 +1762,7 @@ function beep() {
 function logSet(repsOverride) {
   const a = S.active, st = curStep(), ex = EXERCISES[st.id];
   if (a.restUntil) return;
+  touch();
   const entry = { id: st.id, set: a.set, w: (ex.load === 'db1' || ex.load === 'db2') && st.kind === 'work' ? (a.w || 0) : null, effort: st.kind === 'work' ? a.effort : null, main: !!st.main, target: { reps: st.reps, secs: st.secs, sets: st.sets }, prev: S.loads[st.id] };
   if (st.secs) entry.secs = a.reps; else entry.reps = repsOverride != null ? repsOverride : a.reps;
   a.log.push(entry);
@@ -1872,7 +1917,7 @@ document.addEventListener('click', (ev) => {
     case 'skipex': if (confirm('Skip ' + EXERCISES[curStep().id].name + ' today?')) skipExercise(); break;
     case 'tstart': { const el = $('#tval'); const secs = +el.dataset.secs; a.timer = { until: Date.now() + secs * 1000 }; save(); const tb = $('#tblock'); if (tb) { tb.innerHTML = timerBlock(secs, curStep().kind !== 'warm'); startTick(); } else renderSession(); break; }
     case 'tstop': { a.timer = null; save(); const st = curStep(); const tb = $('#tblock'); if (tb) tb.innerHTML = timerBlock(st.kind === 'warm' ? st.secs : a.reps, st.kind !== 'warm'); else renderSession(); break; }
-    case 'rest30': a.restUntil += 30000; a.restTotal += 30000; save(); break;
+    case 'rest30': a.restUntil += 30000; a.restTotal += 30000; touch(); save(); break;
     case 'restskip': endRest(); break;
     case 'accept': a.accept[b.dataset.k] = !a.accept[b.dataset.k]; save(); b.setAttribute('aria-pressed', String(a.accept[b.dataset.k])); b.textContent = a.accept[b.dataset.k] ? 'Yes' : 'Keep'; break;
     case 'restundo': undoSet(); break;
