@@ -96,7 +96,7 @@ a { color: var(--accent); }
 .thumb .fig-floor { display: none; }
 
 /* Buttons */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; border: 1.5px solid transparent; padding: 0 18px; height: 52px; font-weight: 600; font-size: 17px; background: var(--fog); color: var(--ink); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 12px; border: 1.5px solid transparent; padding: 12px 18px; min-height: 52px; font-weight: 600; font-size: 17px; line-height: 1.25; white-space: normal; text-align: center; background: var(--fog); color: var(--ink); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); }
 .btn.outline { background: transparent; border-color: var(--line); }
 .btn.quiet { background: transparent; color: var(--accent); height: auto; min-height: 44px; padding: 8px; white-space: normal; line-height: 1.3; font-weight: 500; }
@@ -1371,7 +1371,7 @@ function viewToday() {
     html += `<div class="section"><h3>Before the first session</h3><div class="card"><ul class="plain">
       <li>Pick starting weights you could lift about 15 times. The app will move you up; starting light costs nothing.</li>
       <li>Each set ends with one tap on how it felt. Easy means three or more reps were left; Just right means one or two; Hard means none. That tap drives the weight suggestions.</li>
-      <li>Tap How to on any exercise for the cues and the common mistakes. The figure shows the pace.</li>
+      <li>Tap \u201cHow to\u201d on any exercise for the cues and the common mistakes. The figure shows the pace.</li>
       <li>Nothing here should hurt. Sharp pain, or pain in a joint, means stop that exercise and skip it.</li></ul>
       <button class="btn outline block" data-act="tab" data-tab="learn">Read the equipment list and the science</button></div></div>`;
   } else {
